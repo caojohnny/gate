@@ -1,0 +1,13 @@
+--- SpiceZpr.h	2017-04-07 16:52:22.000000000 -0700
++++ SpiceZpr.h.new	2019-08-02 19:34:58.801910992 -0700
+@@ -706,6 +706,10 @@
+ #include "SpiceCel.h"
+ #endif
+ 
++#ifndef  HAVE_SPICE_CK_H
++#include "SpiceCK.h"
++#endif
++
+ #ifndef  HAVE_SPICE_DLA_H
+ #include "SpiceDLA.h"
+ #endif
