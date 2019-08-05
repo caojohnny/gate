@@ -1,6 +1,8 @@
 #include <math.h>
 #include <stdio.h>
-#include <SpiceZpr.h>
+#include <SpiceUsr.h>
+
+#include "topo.h"
 
 typedef struct {
     SpiceInt cat_num;
@@ -30,7 +32,10 @@ SpiceInt get_int_from_table(SpiceInt column, SpiceInt row) {
     ekgi_c(column, row, 0, &data, &is_null, &found);
 
     if (!found || is_null) {
-        printf("No SpiceInt found from column=%d row=%d\n", column, row);
+        setmsg_c("No SpiceInt found from column=%d row=%d\n");
+        errint_c("%d", column);
+        errint_c("%d", row);
+        sigerr_c("get_int");
         return 0;
     }
 
@@ -44,7 +49,10 @@ SpiceDouble get_double_from_table(SpiceInt column, SpiceInt row) {
     ekgd_c(column, row, 0, &data, &is_null, &found);
 
     if (!found || is_null) {
-        printf("No SpiceDouble found from column=%d row=%d\n", column, row);
+        setmsg_c("No SpiceDouble found from column=%d row=%d\n");
+        errint_c("%d", column);
+        errint_c("%d", row);
+        sigerr_c("get_double");
         return 0;
     }
 
@@ -54,22 +62,9 @@ SpiceDouble get_double_from_table(SpiceInt column, SpiceInt row) {
 int main() {
     furnsh_c("./kernels/hipparcos.bin");   // GENERIC STARS KERNEL
     furnsh_c("./kernels/naif0011.tls");    // GENERIC LSK KERNEL
-    furnsh_c("./kernels/de435.bsp");       // JPL PLANETARY SPK
     furnsh_c("./kernels/pck00010.tpc");    // GENERIC PCK KERNEL
     furnsh_c("./kernels/earth_fixed.tf");  // EARTH_FIXED ALIAS
-    furnsh_c("./frame-seattle-topo.tk");   // TOPOCENTRIC - TEST
-
-    SpiceChar file_type[100];
-    SpiceChar source[100];
-    SpiceInt handle;
-    SpiceBoolean found;
-    kinfo_c("./kernels/tycho2.bin", 100, 100, file_type, source, &handle, &found);
-    printf("Kernel data:\n"
-           "\tfile_type=%s\n"
-           "\tsource=%s\n"
-           "\thandle=%d\n"
-           "\tfound=%d\n",
-           file_type, source, handle, found);
+    furnsh_c("./kernels/earth_000101_191026_190804.bpc");  // GENERIC ITRF93 KERNEL
 
     SpiceInt table_count;
     ekntab_c(&table_count);
@@ -161,6 +156,9 @@ int main() {
     SpiceDouble et;
     str2et_c("2019 AUG 7 16:31:09", &et);
 
+    SpiceChar topo_frame[13] = "SEATTLE_TOPO";
+    load_topo_frame(topo_frame, -122, 42);
+
     for (int i = 0; i < row_count; ++i) {
         star_info info = matching_stars[i];
         SpiceDouble as;
@@ -171,8 +169,6 @@ int main() {
         convrt_c(dist_parsecs, "PARSECS", "KM", &dist_km);
         printf("Star dist = %f km\n", dist_km);
 
-        SpiceDouble star_rec[3];
-
         SpiceDouble t = (et / jyear_c()) + ((j2000_c() - j1950_c()) / (jyear_c() / spd_c()));
         SpiceDouble dtra = t - info.ra_epoch;
         SpiceDouble dtdec = t - info.dec_epoch;
@@ -182,6 +178,7 @@ int main() {
         SpiceDouble dec_u = sqrt(pow(info.dec_sigma, 2) + pow(dtdec * info.dec_pm_sigma, 2));
         printf("Our best info for star: ra=%f (+/-)%f dec=%f (+/-)%f\n", ra, ra_u, dec, dec_u);
 
+        SpiceDouble star_rec[3];
         SpiceDouble ra_rad = ra * rpd_c();
         SpiceDouble dec_rad = dec * rpd_c();
         radrec_c(dist_km, ra_rad, dec_rad, star_rec);
@@ -190,7 +187,7 @@ int main() {
 
         SpiceDouble star_topo_rec[3];
         SpiceDouble star_rot_matrix[3][3];
-        pxform_c("J2000", "SEATTLE_TOPO", et, star_rot_matrix);
+        pxform_c("J2000", topo_frame, et, star_rot_matrix);
         mxv_c(star_rot_matrix, star_rec, star_topo_rec);
 
         SpiceDouble topo_r;
@@ -202,6 +199,8 @@ int main() {
         SpiceDouble topo_dec_deg = topo_dec * dpr_c();
         printf("Look angle: ra=%f dec=%f\n", topo_ra_deg, topo_dec_deg);
     }
+
+    unload_topo_frame(topo_frame);
 
     return 0;
 }
