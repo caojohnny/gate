@@ -26,9 +26,3 @@ Reference: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html#TK%
     TKFRAME_{0}_ANGLES   = ( -{2},
                              -{3},
                              180.0 )
-
-    TKFRAME_EARTH_FIXED_RELATIVE = 'IAU_EARTH'
-    TKFRAME_EARTH_FIXED_SPEC     = 'MATRIX'
-    TKFRAME_EARTH_FIXED_MATRIX   = ( 1   0   0
-                                     0   1   0
-                                     0   0   1 )

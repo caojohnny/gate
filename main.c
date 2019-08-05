@@ -1,12 +1,55 @@
+#include <math.h>
 #include <stdio.h>
 #include <SpiceZpr.h>
 
 typedef struct {
     SpiceInt cat_num;
+
     SpiceDouble parallax;
     SpiceDouble ra;
     SpiceDouble dec;
+
+    SpiceDouble ra_epoch;
+    SpiceDouble dec_epoch;
+
+    // Proper motion
+    SpiceDouble ra_pm;
+    SpiceDouble dec_pm;
+
+    // Used to calculate uncertainty
+    SpiceDouble ra_sigma;
+    SpiceDouble dec_sigma;
+    SpiceDouble ra_pm_sigma;
+    SpiceDouble dec_pm_sigma;
 } star_info;
+
+SpiceInt get_int_from_table(SpiceInt column, SpiceInt row) {
+    SpiceInt data;
+    SpiceBoolean found;
+    SpiceBoolean is_null;
+    ekgi_c(column, row, 0, &data, &is_null, &found);
+
+    if (!found || is_null) {
+        printf("No SpiceInt found from column=%d row=%d\n", column, row);
+        return 0;
+    }
+
+    return data;
+}
+
+SpiceDouble get_double_from_table(SpiceInt column, SpiceInt row) {
+    SpiceDouble data;
+    SpiceBoolean found;
+    SpiceBoolean is_null;
+    ekgd_c(column, row, 0, &data, &is_null, &found);
+
+    if (!found || is_null) {
+        printf("No SpiceDouble found from column=%d row=%d\n", column, row);
+        return 0;
+    }
+
+    return data;
+}
 
 int main() {
     furnsh_c("./kernels/hipparcos.bin");   // GENERIC STARS KERNEL
@@ -14,7 +57,7 @@ int main() {
     furnsh_c("./kernels/de435.bsp");       // JPL PLANETARY SPK
     furnsh_c("./kernels/pck00010.tpc");    // GENERIC PCK KERNEL
     furnsh_c("./kernels/earth_fixed.tf");  // EARTH_FIXED ALIAS
-    furnsh_c("./frame-seattle-topo.tk");  // EARTH_FIXED ALIAS
+    furnsh_c("./frame-seattle-topo.tk");   // TOPOCENTRIC - TEST
 
     SpiceChar file_type[100];
     SpiceChar source[100];
@@ -57,10 +100,15 @@ int main() {
                table_name, i, column_name, dsc.cclass, dsc.dtype, dsc.size);
     }
 
-    SpiceChar query[200];
-    snprintf(query, 200, "SELECT CATALOG_NUMBER, DM_NUMBER, PARLAX, RA, DEC FROM %s WHERE "
-                         // Proxima Centauri
-                         "CATALOG_NUMBER = 70890",
+    SpiceChar query[500];
+    snprintf(query, 500, "SELECT "
+                         "CATALOG_NUMBER, DM_NUMBER, "
+                         "PARLAX, RA, DEC, RA_EPOCH, DEC_EPOCH, "
+                         "RA_PM, DEC_PM, "
+                         "RA_SIGMA, DEC_SIGMA, RA_PM_SIGMA, DEC_PM_SIGMA "
+                         "FROM %s WHERE "
+                         // Polaris
+                         "CATALOG_NUMBER = 11767",
             // "RA >= 216 AND RA <= 218 AND "
             // "DEC >= 61 AND DEC <= 63",
              table_name);
@@ -71,34 +119,31 @@ int main() {
     ekfind_c(query, 100, &row_count, &error_occurred, error_string);
     printf("Found %d relevant rows in table %s\n", row_count, table_name);
 
+    if (error_occurred) {
+        puts(error_string);
+        return 1;
+    }
+
     star_info matching_stars[row_count];
     for (int i = 0; i < row_count; ++i) {
-        SpiceInt cat_num;
-        SpiceBoolean is_cat_num_null;
-        SpiceBoolean is_cat_num_found;
-        ekgi_c(0, i, 0, &cat_num, &is_cat_num_null, &is_cat_num_found);
+        SpiceInt cat_num = get_int_from_table(0, i);
+        SpiceInt dm_num = get_int_from_table(1, i);
+        SpiceDouble parallax = get_double_from_table(2, i);
+        SpiceDouble ra = get_double_from_table(3, i);
+        SpiceDouble dec = get_double_from_table(4, i);
+        SpiceDouble ra_epoch = get_double_from_table(5, i);
+        SpiceDouble dec_epoch = get_double_from_table(6, i);
+        SpiceDouble ra_pm = get_double_from_table(7, i);
+        SpiceDouble dec_pm = get_double_from_table(8, i);
+        SpiceDouble ra_sigma = get_double_from_table(9, i);
+        SpiceDouble dec_sigma = get_double_from_table(10, i);
+        SpiceDouble ra_pm_sigma = get_double_from_table(11, i);
+        SpiceDouble dec_pm_sigma = get_double_from_table(12, i);
 
-        SpiceInt dm_num;
-        SpiceBoolean is_dm_num_null;
-        SpiceBoolean is_dm_num_found;
-        ekgi_c(1, i, 0, &dm_num, &is_dm_num_null, &is_dm_num_found);
-
-        SpiceDouble parallax;
-        SpiceBoolean is_parallax_null;
-        SpiceBoolean is_parallax_found;
-        ekgd_c(2, i, 0, &parallax, &is_parallax_null, &is_parallax_found);
-
-        SpiceDouble ra;
-        SpiceBoolean is_ra_null;
-        SpiceBoolean is_ra_found;
-        ekgd_c(3, i, 0, &ra, &is_ra_null, &is_ra_found);
-
-        SpiceDouble dec;
-        SpiceBoolean is_dec_null;
-        SpiceBoolean is_dec_found;
-        ekgd_c(4, i, 0, &dec, &is_dec_null, &is_dec_found);
-
-        star_info info = {cat_num, parallax, ra, dec};
+        star_info info = {cat_num,
+                          parallax, ra, dec,
+                          ra_epoch, dec_epoch,
+                          ra_pm, dec_pm, ra_sigma, dec_sigma, ra_pm_sigma, dec_pm_sigma};
         matching_stars[i] = info;
 
         SpiceChar body_name[100];
@@ -114,24 +159,7 @@ int main() {
     }
 
     SpiceDouble et;
-    str2et_c("2019 AUG 02 12:10:55", &et);
-
-    SpiceDouble lon = -122 * rpd_c();
-    SpiceDouble lat = 47 * rpd_c();
-    SpiceDouble alt = 0;
-
-    SpiceInt radii_count;
-    SpiceDouble earth_radii_data[3];
-    bodvrd_c("EARTH", "RADII", 3, &radii_count, earth_radii_data);
-    SpiceDouble major_axis_rad = earth_radii_data[0];
-    SpiceDouble minor_axis_rad = earth_radii_data[2];
-    SpiceDouble f = (major_axis_rad - minor_axis_rad) / major_axis_rad;
-
-    // This is also not technically the correct ra/dec
-    // Additional transformations needed
-    // TODO
-    SpiceDouble observer_rec[3];
-    georec_c(lon, lat, alt, major_axis_rad, f, observer_rec);
+    str2et_c("2019 AUG 7 16:31:09", &et);
 
     for (int i = 0; i < row_count; ++i) {
         star_info info = matching_stars[i];
@@ -144,8 +172,18 @@ int main() {
         printf("Star dist = %f km\n", dist_km);
 
         SpiceDouble star_rec[3];
-        SpiceDouble ra_rad = info.ra * rpd_c();
-        SpiceDouble dec_rad = info.dec * rpd_c();
+
+        SpiceDouble t = (et / jyear_c()) + ((j2000_c() - j1950_c()) / (jyear_c() / spd_c()));
+        SpiceDouble dtra = t - info.ra_epoch;
+        SpiceDouble dtdec = t - info.dec_epoch;
+        SpiceDouble ra = info.ra + (dtra * info.ra_pm);
+        SpiceDouble dec = info.dec + (dtdec * info.dec_pm);
+        SpiceDouble ra_u = sqrt(pow(info.ra_sigma, 2) + pow(dtra * info.ra_pm_sigma, 2));
+        SpiceDouble dec_u = sqrt(pow(info.dec_sigma, 2) + pow(dtdec * info.dec_pm_sigma, 2));
+        printf("Our best info for star: ra=%f (+/-)%f dec=%f (+/-)%f\n", ra, ra_u, dec, dec_u);
+
+        SpiceDouble ra_rad = ra * rpd_c();
+        SpiceDouble dec_rad = dec * rpd_c();
         radrec_c(dist_km, ra_rad, dec_rad, star_rec);
 
         printf("Star = (%f, %f, %f)\n", star_rec[0], star_rec[1], star_rec[2]);
@@ -159,6 +197,7 @@ int main() {
         SpiceDouble topo_ra;
         SpiceDouble topo_dec;
         recrad_c(star_topo_rec, &topo_r, &topo_ra, &topo_dec);
+
         SpiceDouble topo_ra_deg = topo_ra * dpr_c();
         SpiceDouble topo_dec_deg = topo_dec * dpr_c();
         printf("Look angle: ra=%f dec=%f\n", topo_ra_deg, topo_dec_deg);
