@@ -1,8 +1,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <SpiceUsr.h>
+#include <time.h>
 
-#include "topo.h"
+#include "../topo.h"
 
 typedef struct {
     SpiceInt cat_num;
@@ -102,8 +103,8 @@ int main() {
                          "RA_PM, DEC_PM, "
                          "RA_SIGMA, DEC_SIGMA, RA_PM_SIGMA, DEC_PM_SIGMA "
                          "FROM %s WHERE "
-                         // Polaris
-                         "CATALOG_NUMBER = 11767",
+                         // Proxima
+                         "CATALOG_NUMBER = 70890",
             // "RA >= 216 AND RA <= 218 AND "
             // "DEC >= 61 AND DEC <= 63",
              table_name);
@@ -153,11 +154,21 @@ int main() {
         }
     }
 
+    time_t current_epoch_time = time(NULL);
+
+    struct tm *local_time = localtime(&current_epoch_time);
+    printf("Current local time: %s", asctime(local_time));
+
+    struct tm *utc_time = gmtime(&current_epoch_time);
+    SpiceChar utc_time_string[20];
+    strftime(utc_time_string, 20, "%Y-%m-%dT%H:%M:%S", utc_time);
+    printf("UTC time: %s\n", utc_time_string);
+
     SpiceDouble et;
-    str2et_c("2019 AUG 7 16:31:09", &et);
+    str2et_c(utc_time_string, &et);
 
     SpiceChar topo_frame[13] = "SEATTLE_TOPO";
-    load_topo_frame(topo_frame, -122, 42);
+    load_topo_frame(topo_frame, -122, 48);
 
     for (int i = 0; i < row_count; ++i) {
         star_info info = matching_stars[i];
@@ -197,7 +208,7 @@ int main() {
 
         SpiceDouble topo_ra_deg = topo_ra * dpr_c();
         SpiceDouble topo_dec_deg = topo_dec * dpr_c();
-        printf("Look angle: ra=%f dec=%f\n", topo_ra_deg, topo_dec_deg);
+        printf("Look angle: ra=%f az=%f dec=%f\n", topo_ra_deg, 360 - topo_ra_deg, topo_dec_deg);
     }
 
     unload_topo_frame(topo_frame);

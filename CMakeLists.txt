@@ -30,7 +30,7 @@ target_link_libraries(dependencies
         INTERFACE cspice
         INTERFACE csupport)
 
-add_executable(gate main.c topo.c topo.h)
+add_executable(gate src/main.c topo.c topo.h)
 target_link_libraries(gate
         PRIVATE dependencies
         PRIVATE m)
