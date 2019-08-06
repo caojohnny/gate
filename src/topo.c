@@ -3,15 +3,14 @@
 
 #define FRAME_ID_BEGIN 1400000
 #define FRAME_ID_END 2000000
-#define MAX_FRAME_IDS 100
 
 #define BUFFER_LINE_COUNT 10
 #define BUFFER_MAX_LINE_LEN 100
-#define EARTH_FIXED_FRAME_ID "EARTH_FIXED"
+
 #define KERNEL_MAX_VAR_LEN 33
 
 static void find_free_frame_id(SpiceInt *frame_id) {
-    SPICEINT_CELL(used_ids, MAX_FRAME_IDS);
+    SPICEINT_CELL(used_ids, TOPO_MAX_FRAME_IDS);
     kplfrm_c(SPICE_FRMTYP_TK, &used_ids);
 
     *frame_id = FRAME_ID_BEGIN;
@@ -33,7 +32,7 @@ static void find_free_frame_id(SpiceInt *frame_id) {
     }
 }
 
-void load_topo_frame(SpiceChar *frame_name, SpiceDouble lon, SpiceDouble lat) {
+void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceDouble lat, SpiceDouble lon) {
     SpiceInt frame_id_test;
     namfrm_c(frame_name, &frame_id_test);
     if (frame_id_test != 0) {
@@ -59,7 +58,7 @@ void load_topo_frame(SpiceChar *frame_name, SpiceDouble lon, SpiceDouble lat) {
     snprintf(kernel_buffer[2], BUFFER_MAX_LINE_LEN, "FRAME_%d_CLASS = 4", frame_id);
     snprintf(kernel_buffer[3], BUFFER_MAX_LINE_LEN, "FRAME_%d_CENTER = 399", frame_id);
     snprintf(kernel_buffer[4], BUFFER_MAX_LINE_LEN, "FRAME_%d_CLASS_ID = %d", frame_id, frame_id);
-    snprintf(kernel_buffer[5], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_RELATIVE = '"EARTH_FIXED_FRAME_ID"'", frame_id);
+    snprintf(kernel_buffer[5], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_RELATIVE = '"TOPO_EARTH_FIXED_FRAME"'", frame_id);
     snprintf(kernel_buffer[6], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_SPEC = 'ANGLES'", frame_id);
     snprintf(kernel_buffer[7], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_UNITS = 'DEGREES'", frame_id);
     snprintf(kernel_buffer[8], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_AXES = (3, 2, 3)", frame_id);
@@ -67,7 +66,7 @@ void load_topo_frame(SpiceChar *frame_name, SpiceDouble lon, SpiceDouble lat) {
     lmpool_c(kernel_buffer, BUFFER_MAX_LINE_LEN, BUFFER_LINE_COUNT);
 }
 
-void unload_topo_frame(SpiceChar *frame_name) {
+void gate_unload_topo_frame(ConstSpiceChar *frame_name) {
     SpiceInt frame_id;
     namfrm_c(frame_name, &frame_id);
     if (frame_id == 0) {
