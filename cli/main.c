@@ -26,22 +26,6 @@ int main() {
     ektnam_c(0, 100, table_name);
     printf("Name of table at idx=0: %s\n", table_name);
 
-    SpiceInt column_count;
-    ekccnt_c(table_name, &column_count);
-    printf("Columns in table_name=%s: %d\n", table_name, column_count);
-
-    for (int i = 0; i < column_count; ++i) {
-        SpiceChar column_name[100];
-        SpiceEKAttDsc dsc;
-        ekcii_c(table_name, i, 100, column_name, &dsc);
-        printf("Column info for table_name=%s and cidx=%d:\n"
-               "\tcolumn_name=%s\n"
-               "\tclass=%d\n"
-               "\ttypeId=%d\n"
-               "\tsize=%d\n",
-               table_name, i, column_name, dsc.cclass, dsc.dtype, dsc.size);
-    }
-
     SpiceInt rows;
     gate_load_stars(table_name, "WHERE CATALOG_NUMBER = 70890", &rows);
 
@@ -61,18 +45,15 @@ int main() {
     SpiceDouble et;
     str2et_c(utc_time_string, &et);
 
-    SpiceChar topo_frame[13] = "SEATTLE_TOPO";
-    gate_load_topo_frame(topo_frame, 48, -122);
+    gate_topo_frame seattle_topo;
+    gate_load_earth_topo_frame("SEATTLE_TOPO", 48, -122, 0, &seattle_topo);
 
     for (int i = 0; i < rows; ++i) {
         gate_star_info_spice1 info = stars[i];
+
         SpiceDouble as;
         convrt_c(info.parallax, "DEGREES", "ARCSECONDS", &as);
-
         SpiceDouble dist_parsecs = 1 / as;
-        SpiceDouble dist_km;
-        convrt_c(dist_parsecs, "PARSECS", "KM", &dist_km);
-        printf("Star dist = %f km\n", dist_km);
 
         SpiceDouble ra;
         SpiceDouble dec;
@@ -84,14 +65,15 @@ int main() {
         SpiceDouble star_rec[3];
         SpiceDouble ra_rad = ra * rpd_c();
         SpiceDouble dec_rad = dec * rpd_c();
-        radrec_c(dist_km, ra_rad, dec_rad, star_rec);
+        radrec_c(dist_parsecs, ra_rad, dec_rad, star_rec);
 
-        printf("Star = (%f, %f, %f)\n", star_rec[0], star_rec[1], star_rec[2]);
+        SpiceDouble star_rot_matrix[3][3];
+        pxform_c("J2000", seattle_topo.frame_name, et, star_rot_matrix);
 
         SpiceDouble star_topo_rec[3];
-        SpiceDouble star_rot_matrix[3][3];
-        pxform_c("J2000", topo_frame, et, star_rot_matrix);
         mxv_c(star_rot_matrix, star_rec, star_topo_rec);
+
+        gate_conv_adjust_topo_rec(seattle_topo, "PARSECS", star_topo_rec);
 
         SpiceDouble topo_r;
         SpiceDouble topo_ra;
@@ -100,10 +82,10 @@ int main() {
 
         SpiceDouble topo_ra_deg = topo_ra * dpr_c();
         SpiceDouble topo_dec_deg = topo_dec * dpr_c();
-        printf("Look angle: ra=%f az=%f dec=%f\n", topo_ra_deg, 360 - topo_ra_deg, topo_dec_deg);
+        printf("Look angle: az=%.30f dec=%.30f\n", 360 - topo_ra_deg, topo_dec_deg);
     }
 
-    gate_unload_topo_frame(topo_frame);
+    gate_unload_topo_frame(seattle_topo);
 
     return 0;
 }

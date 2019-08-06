@@ -1,9 +1,6 @@
 /**
  * Support for manipulating star data.
  *
- * Requires a stars generic E-Kernel (EK) to be loaded
- * to execute any procedures to load or parse data.
- *
  * NAIF undertook efforts to support stars in the SPICE
  * Toolkit long ago [1], however, these efforts stopped
  * and it appears that the only elements of those efforts
@@ -17,6 +14,10 @@
  * a few utilities that can make working with stars that
  * little bit more bearable until NAIF decides to possibly
  * add better support into SPICE Toolkit itself.
+ *
+ * Because stars do not have NAIF IDs, it is not possible
+ * to use pre-existing procedures such as spkcpo_c() to
+ * determine state vectors.
  *
  * [1]: https://naif.jpl.nasa.gov/pub/naif/generic_kernels/aareadme.txt
  */
@@ -35,10 +36,10 @@
  * Currently, the only catalogs available are HIPPARCOS,
  * PPM, and TYCHO2.
  *
- * Information about each particular database and what each
- * column means can be found from using the COMMT utility
- * and from searching for the parameters for each catalog
- * online.
+ * Information about each particular catalog and what each
+ * column means and their units can be found from using the
+ * COMMT utility and from searching for the parameters for
+ * each catalog online.
  *
  * https://naif.jpl.nasa.gov/pub/naif/generic_kernels/stars/
  */
@@ -64,13 +65,16 @@ typedef struct {
  * Loads stars from a stars table from a loaded EK to be
  * later parsed by gate_parse_stars().
  *
+ * Requires a stars generic Events Kernel (EK) providing
+ * the given table to be loaded.
+ *
  * @param table the name of the table which to load the
  * star data into memory (input)
  * @param filter a filter string, which starts with either
  * {@code WHERE} and/or {@code ORDER} if a filter is
  * desired, otherwise {@code NULL} (input)
- * @param rows the number of rows that match the query,
- * or NULL if not desired (output)
+ * @param rows the number of rows that match the query
+ * (output)
  *
  * @throws query if the query string was somehow mangled
  * or an error occurred executing that query
@@ -81,6 +85,9 @@ void gate_load_stars(ConstSpiceChar *table, ConstSpiceChar *filter, SpiceInt *ro
  * Parses stars loaded by the gate_load_stars() procedure
  * into gate_star_info_spice1 data structs.
  *
+ * Requires a stars generic Events Kernel (EK) providing
+ * the given table to be loaded.
+ *
  * Behavior undefined if gate_load_stars() was not called
  * prior to running this procedure.
  *
@@ -90,7 +97,7 @@ void gate_load_stars(ConstSpiceChar *table, ConstSpiceChar *filter, SpiceInt *ro
  * @param max_size the maximum number of stars to parse
  * (not the actual number of stars to load) (input)
  * @param array the array of parsed star information to
- * parse into
+ * parse into (output)
  */
 void gate_parse_stars(SpiceInt max_size, gate_star_info_spice1 *array);
 
@@ -119,5 +126,7 @@ void gate_parse_stars(SpiceInt max_size, gate_star_info_spice1 *array);
  */
 void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
         SpiceDouble *ra, SpiceDouble *dec, SpiceDouble *ra_u, SpiceDouble *dec_u);
+
+
 
 #endif // GATE_STARS_H

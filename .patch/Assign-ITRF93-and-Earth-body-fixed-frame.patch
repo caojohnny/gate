@@ -1,0 +1,17 @@
+--- earth_fixed.tf	2019-08-06 15:43:01.715992998 -0700
++++ earth_fixed.tf.new	2019-08-06 15:44:06.512206972 -0700
+@@ -8,12 +8,12 @@
+ 
+         \begindata
+  
+-           TKFRAME_EARTH_FIXED_RELATIVE = 'IAU_EARTH'
++           TKFRAME_EARTH_FIXED_RELATIVE = 'ITRF93'
+            TKFRAME_EARTH_FIXED_SPEC     = 'MATRIX'
+            TKFRAME_EARTH_FIXED_MATRIX   = ( 1   0   0
+                                             0   1   0
+                                             0   0   1 )
+-
++           OBJECT_399_FRAME = 'EARTH_FIXED'
+ 
+  
+         \begintext

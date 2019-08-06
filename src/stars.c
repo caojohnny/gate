@@ -20,13 +20,7 @@ void gate_load_stars(ConstSpiceChar *table, ConstSpiceChar const *filter, SpiceI
 
     SpiceBoolean error;
     SpiceChar error_message[GATE_SPICE_MSG_MAX_LEN];
-
-    if (rows != NULL) {
-        ekfind_c(query, GATE_SPICE_MSG_MAX_LEN, rows, &error, error_message);
-    } else {
-        SpiceInt dummy_rows;
-        ekfind_c(query, GATE_SPICE_MSG_MAX_LEN, &dummy_rows, &error, error_message);
-    }
+    ekfind_c(query, GATE_SPICE_MSG_MAX_LEN, rows, &error, error_message);
 
     if (error) {
         setmsg_c(error_message);
