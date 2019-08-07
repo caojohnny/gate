@@ -17,7 +17,10 @@ int main() {
     printf("Number of loaded tables: %d\n", table_count);
 
     if (table_count > 1) {
-        printf("table_count=%d is greater than 1", table_count);
+        setmsg_c("table_count=%d is greater than 1");
+        errint_c("%d", table_count);
+        sigerr_c("tablecount");
+
         return 1;
     }
 
@@ -32,7 +35,6 @@ int main() {
     gate_parse_stars(rows, stars);
 
     time_t current_epoch_time = time(NULL);
-
     struct tm *local_time = localtime(&current_epoch_time);
     printf("Current local time: %s", asctime(local_time));
 

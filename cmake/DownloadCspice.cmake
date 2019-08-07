@@ -8,7 +8,6 @@ FetchContent_Declare(
         cspice
         URL http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
         URL_HASH SHA256=93cd4fbce5818f8b7fecf3914c5756b8d41fd5bdaaeac1f4037b5a5410bc4768
-        PATCH_COMMAND patch -r - -i ${CMAKE_SOURCE_DIR}/.patch/Fix-compilation-issue-with-SpiceZpr.patch <SOURCE_DIR>/include/SpiceZpr.h || true
 )
 FetchContent_Populate(cspice)
 
