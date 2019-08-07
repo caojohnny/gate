@@ -76,3 +76,47 @@ void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
         *dec_u = sqrt(pow(info.dec_sigma, 2) + pow(dtdec * info.dec_pm_sigma, 2));
     }
 }
+
+void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 info, SpiceDouble et,
+                         SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *inclination) {
+    SpiceDouble parallax_as;
+    convrt_c(info.parallax, "DEGREES", "ARCSECONDS", &parallax_as);
+    SpiceDouble dist_parsecs = 1 / parallax_as;
+
+    SpiceDouble dist_km;
+    convrt_c(dist_parsecs, "PARSECS", "KILOMETERS", &dist_km);
+
+    SpiceDouble current_ra;
+    SpiceDouble current_dec;
+    gate_calc_star_pos(info, et, &current_ra, &current_dec, NULL, NULL);
+
+    SpiceDouble ra_rad = current_ra * rpd_c();
+    SpiceDouble dec_rad = current_dec * rpd_c();
+    SpiceDouble star_pos_j2000_rec[3];
+    radrec_c(dist_km, ra_rad, dec_rad, star_pos_j2000_rec);
+
+    SpiceDouble frame_transform_matrix[3][3];
+    pxform_c("J2000", observer_frame.frame_name, et, frame_transform_matrix);
+
+    SpiceDouble star_topo_rec[3];
+    mxv_c(frame_transform_matrix, star_pos_j2000_rec, star_topo_rec);
+
+    gate_adjust_topo_rec(observer_frame, star_topo_rec);
+
+    SpiceDouble r;
+    SpiceDouble az;
+    SpiceDouble inc;
+    recrad_c(star_topo_rec, &r, &az, &inc);
+
+    if (range != NULL) {
+        *range = r;
+    }
+
+    if (azimuth != NULL) {
+        *azimuth = 360 - (az * dpr_c());
+    }
+
+    if (inclination != NULL) {
+        *inclination = inc * dpr_c();
+    }
+}

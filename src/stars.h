@@ -26,6 +26,7 @@
 #define GATE_STARS_H
 
 #include <cspice/SpiceUsr.h>
+#include "topo.h"
 
 #define STARS_QUERY_MAX_LEN 500
 
@@ -127,6 +128,32 @@ void gate_parse_stars(SpiceInt max_size, gate_star_info_spice1 *array);
 void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
         SpiceDouble *ra, SpiceDouble *dec, SpiceDouble *ra_u, SpiceDouble *dec_u);
 
-
+/**
+ * Computes the position of a star with respect to the
+ * given topocentric frame of an observer at the given time
+ * past J2000.
+ *
+ * This method accounts for the proper motion of stars as
+ * time passes, the position of the Earth and the solar
+ * system, and the topocentric position of the observer
+ * when producing the output values.
+ *
+ * @param observer_frame the observer's topocentric
+ * reference frame (input)
+ * @param info the information represent the star for which
+ * to produce the calculated values (input)
+ * @param et the elapsed time in seconds past J2000,
+ * retrievable from str2et_c() (input)
+ * @param range the distance of the star from the position
+ * of the observer in kilometers, or NULL if not desired
+ * (output)
+ * @param azimuth the viewing azimuth, in degrees from true
+ * north, or NULL if not desired (output)
+ * @param inclination the viewing inclination, in degrees
+ * from the observer's local horizon, or NULL if not desired
+ * (output)
+ */
+void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 info, SpiceDouble et,
+        SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *inclination);
 
 #endif // GATE_STARS_H
