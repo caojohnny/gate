@@ -104,14 +104,14 @@ void gate_parse_stars(SpiceInt max_size, gate_star_info_spice1 *array);
 
 /**
  * Calculates the new position of the star at the given
- * epoch time, {@code et}, which accounts for the proper
- * motion of stars over the length of time from which the
- * position was first determined.
+ * ephemeris time, {@code et}, which accounts for the
+ * proper motion of stars over the length of time from
+ * which the position was first determined.
  *
  * @param info the information representing the star which
  * to determine the new star position (input)
- * @param et the epoch time after J2000 at which to
- * determine the new star position (input)
+ * @param et the ephemeris time at which to determine the
+ * new star position (input)
  * @param ra set by this procedure to represent the right
  * ascension of the star at the epoch time in the J2000
  * frame, or NULL if not desired (output)

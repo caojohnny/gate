@@ -2,14 +2,15 @@
  * Support for topocentric/topographic frames.
  *
  * The SPICE "built-in" reference frames do not bundle
- * out-of-the-box support for topographic frames, which
+ * out-of-the-box support for topocentric frames, which
  * are reference frames that are centered around a point
  * on the surface of a planet. While "body-fixed" frames,
  * which are fixed on the center of a planet but are non-
- * inertial (meaning that they rotate with the body), such
+ * inertial (meaning that they rotate with the body, and
+ * the orientation is therefore fixed to the crust), such
  * as {@code IAU_EARTH} and {@code ITRF93} exist, they are
  * difficult to use when the observation plane is centered
- * around an observer standing on the surface of that body.
+ * around an observer located on the surface of that body.
  *
  * A topographic frame is defined by an offset from a
  * standard body-fixed frame in order to describe the
