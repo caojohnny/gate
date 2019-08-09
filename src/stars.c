@@ -78,7 +78,7 @@ void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
 }
 
 void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 info, SpiceDouble et,
-                         SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *inclination) {
+                         SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *elevation) {
     SpiceDouble parallax_as;
     convrt_c(info.parallax, "DEGREES", "ARCSECONDS", &parallax_as);
     SpiceDouble dist_parsecs = 1 / parallax_as;
@@ -105,8 +105,8 @@ void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 i
 
     SpiceDouble r;
     SpiceDouble az;
-    SpiceDouble inc;
-    recrad_c(star_topo_rec, &r, &az, &inc);
+    SpiceDouble el;
+    recrad_c(star_topo_rec, &r, &az, &el);
 
     if (range != NULL) {
         *range = r;
@@ -116,7 +116,7 @@ void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 i
         *azimuth = 360 - (az * dpr_c());
     }
 
-    if (inclination != NULL) {
-        *inclination = inc * dpr_c();
+    if (elevation != NULL) {
+        *elevation = el * dpr_c();
     }
 }

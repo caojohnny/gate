@@ -149,11 +149,11 @@ void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
  * (output)
  * @param azimuth the viewing azimuth, in degrees from true
  * north, or NULL if not desired (output)
- * @param inclination the viewing inclination, in degrees
+ * @param elevation the viewing elevation, in degrees
  * from the observer's local horizon, or NULL if not desired
  * (output)
  */
 void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 info, SpiceDouble et,
-        SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *inclination);
+        SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *elevation);
 
 #endif // GATE_STARS_H

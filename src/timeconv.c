@@ -4,11 +4,11 @@
 #define NS_PER_SEC 1000000000
 #define TIMECONV_BUFFER_LEN 100
 
-void gate_unix_date_to_et(struct tm date, SpiceDouble *et) {
-    gate_unix_date_ns_to_et(date, 0, et);
+void gate_unix_utc_to_et(struct tm date, SpiceDouble *et) {
+    gate_unix_utc_ns_to_et(date, 0, et);
 }
 
-void gate_unix_date_ns_to_et(struct tm date, time_t additional_ns, SpiceDouble *et) {
+void gate_unix_utc_ns_to_et(struct tm date, time_t additional_ns, SpiceDouble *et) {
     time_t epoch = mktime(&date);
     gate_unix_ns_to_et(epoch, additional_ns, et);
 }
@@ -42,12 +42,14 @@ void gate_unix_ns_to_et(time_t unix_epoch, time_t additional_ns, SpiceDouble *et
 
 void gate_et_to_unix_ns(SpiceDouble et, time_t *unix_epoch, time_t *additional_ns) {
     struct tm unix_date;
-    gate_et_to_unix_date_ns(et, &unix_date, additional_ns);
+    gate_et_to_unix_utc_ns(et, &unix_date, additional_ns);
 
-    *unix_epoch = mktime(&unix_date);
+    if (unix_epoch != NULL) {
+        *unix_epoch = mktime(&unix_date);
+    }
 }
 
-void gate_et_to_unix_date_ns(SpiceDouble et, struct tm *unix_date, time_t *additional_ns) {
+void gate_et_to_unix_utc_ns(SpiceDouble et, struct tm *unix_date, time_t *additional_ns) {
     SpiceChar buffer[TIMECONV_BUFFER_LEN];
     timout_c(et, "YYYY-MM-DDTHR:MN:SC ::UTC", TIMECONV_BUFFER_LEN, buffer);
 
@@ -57,7 +59,10 @@ void gate_et_to_unix_date_ns(SpiceDouble et, struct tm *unix_date, time_t *addit
            &output.tm_year, &output.tm_mon, &output.tm_mday, &output.tm_hour, &output.tm_min, &sec);
 
     output.tm_sec = sec;
-    *unix_date = output;
+
+    if (unix_date != NULL) {
+        *unix_date = output;
+    }
 
     if (additional_ns != NULL) {
         *additional_ns = sec - output.tm_sec;

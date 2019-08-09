@@ -17,7 +17,7 @@ int main() {
     SpiceChar input[300];
     prompt_c("gate> ", 300, input);
     if (strcmp(input, "STAR") != 0) {
-        printf("'%s' is not a valid command!");
+        printf("'%s' is not a valid command!", input);
         return 1;
     }
 
@@ -54,9 +54,9 @@ int main() {
         gate_star_info_spice1 info = stars[i];
 
         SpiceDouble azimuth;
-        SpiceDouble inclination;
-        gate_calc_star_topo(seattle_topo, info, et, NULL, &azimuth, &inclination);
-        printf("Look angle: az=%f inc=%f\n", azimuth, inclination);
+        SpiceDouble elevation;
+        gate_calc_star_topo(seattle_topo, info, et, NULL, &azimuth, &elevation);
+        printf("Look angle: az=%f el=%f\n", azimuth, elevation);
     }
 
     gate_unload_topo_frame(seattle_topo);
