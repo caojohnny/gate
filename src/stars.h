@@ -28,8 +28,6 @@
 #include <cspice/SpiceUsr.h>
 #include "topo.h"
 
-#define STARS_QUERY_MAX_LEN 500
-
 /**
  * Represents star data laid out in a SPICE TYPE 1 star
  * catalog.
@@ -126,7 +124,7 @@ void gate_parse_stars(SpiceInt max_size, gate_star_info_spice1 *array);
  * desired (output)
  */
 void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
-        SpiceDouble *ra, SpiceDouble *dec, SpiceDouble *ra_u, SpiceDouble *dec_u);
+                        SpiceDouble *ra, SpiceDouble *dec, SpiceDouble *ra_u, SpiceDouble *dec_u);
 
 /**
  * Computes the position of a star with respect to the
@@ -154,6 +152,6 @@ void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
  * (output)
  */
 void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 info, SpiceDouble et,
-        SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *elevation);
+                         SpiceDouble *range, SpiceDouble *azimuth, SpiceDouble *elevation);
 
 #endif // GATE_STARS_H

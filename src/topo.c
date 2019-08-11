@@ -77,7 +77,8 @@ void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
     snprintf(kernel_buffer[6], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_SPEC = 'ANGLES'", frame_id);
     snprintf(kernel_buffer[7], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_UNITS = 'DEGREES'", frame_id);
     snprintf(kernel_buffer[8], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_AXES = (3, 2, 3)", frame_id);
-    snprintf(kernel_buffer[9], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_ANGLES = (-%.10f, -%.10f, 180)", frame_id, lon_adjusted, lat_adjusted);
+    snprintf(kernel_buffer[9], BUFFER_MAX_LINE_LEN, "TKFRAME_%d_ANGLES = (-%.10f, -%.10f, 180)", frame_id, lon_adjusted,
+             lat_adjusted);
     lmpool_c(kernel_buffer, BUFFER_MAX_LINE_LEN, BUFFER_LINE_COUNT);
 
     gate_topo_frame new_frame = {frame_name, body_id, latitude, longitude, radius};

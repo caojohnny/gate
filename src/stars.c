@@ -2,6 +2,7 @@
 #include "constants.h"
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 void gate_load_stars(ConstSpiceChar *table, ConstSpiceChar const *filter, SpiceInt *rows) {
     ConstSpiceChar *actual_filter = "";
@@ -9,13 +10,14 @@ void gate_load_stars(ConstSpiceChar *table, ConstSpiceChar const *filter, SpiceI
         actual_filter = filter;
     }
 
-    SpiceChar query[STARS_QUERY_MAX_LEN];
-    snprintf(query, STARS_QUERY_MAX_LEN, "SELECT "
-                                         "CATALOG_NUMBER, "
-                                         "DEC, DEC_EPOCH, DEC_PM, DEC_PM_SIGMA, DEC_SIGMA, "
-                                         "DM_NUMBER, PARLAX, "
-                                         "RA, RA_EPOCH, RA_PM, RA_PM_SIGMA, RA_SIGMA, "
-                                         "SPECTRAL_TYPE, VISUAL_MAGNITUDE FROM %s %s",
+    SpiceInt query_len = 174 + strlen(table) + strlen(actual_filter);
+    SpiceChar query[query_len];
+    snprintf(query, query_len, "SELECT "
+                               "CATALOG_NUMBER, "
+                               "DEC, DEC_EPOCH, DEC_PM, DEC_PM_SIGMA, DEC_SIGMA, "
+                               "DM_NUMBER, PARLAX, "
+                               "RA, RA_EPOCH, RA_PM, RA_PM_SIGMA, RA_SIGMA, "
+                               "SPECTRAL_TYPE, VISUAL_MAGNITUDE FROM %s %s",
              table, actual_filter);
 
     SpiceBoolean error;
@@ -23,7 +25,9 @@ void gate_load_stars(ConstSpiceChar *table, ConstSpiceChar const *filter, SpiceI
     ekfind_c(query, GATE_SPICE_MSG_MAX_LEN, rows, &error, error_message);
 
     if (error) {
-        setmsg_c(error_message);
+        setmsg_c("Error occurred, long msg was '%s'. Query string is '%s'");
+        errch_c("%s", error_message);
+        errch_c("%s", query);
         sigerr_c("query");
         return;
     }
