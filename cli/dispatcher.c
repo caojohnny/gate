@@ -12,11 +12,25 @@ void dispatch(int argc, char **argv, volatile int *is_running) {
         }
     }
 
-    if (argc == 3) {
-        if (eq_ignore_case("LOAD", label)) {
-            return load_kernel(argc, argv);
+    if (argc == 2) {
+        if (eq_ignore_case("GET", label)) {
+            return get(argv);
+        }
+
+        if (eq_ignore_case("SHOW", label)) {
+            return show(argv);
         }
     }
 
-    printf("Command not recognized. Try typing 'help'.\n");
+    if (argc == 3) {
+        if (eq_ignore_case("SET", label)) {
+            return set(argv);
+        }
+
+        if (eq_ignore_case("LOAD", label)) {
+            return load(argv);
+        }
+    }
+
+    puts("Command not recognized. Try typing 'HELP'");
 }

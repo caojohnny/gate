@@ -12,14 +12,52 @@
 void help();
 
 /**
- * Handles a command which loads a kernel or a metakernel
- * into the SPICE Toolkit kernel pool.
+ * Sets a CLI-specific option.
  *
- * Usage: LOAD KERNEL <filename>
+ * Usage: SET <key> <value>
  *
- * @param argc the argument count
+ * Options:
+ *   - OBSERVER_BODY <body name>
+ *     (default='Earth')
+ *   - OBSERVER_LATITUDE <latitude>
+ *     (default=NULL)
+ *   - OBSERVER_LONGITUDE <longitude>
+ *     (default=NULL)
+ *   - STAR_TABLE <table name>
+ *     (default=NULL)
+ *
  * @param argv the argument vector
  */
-void load_kernel(int argc, char **argv);
+void set(char **argv);
+
+/**
+ * Gets a CLI-specific option.
+ *
+ * Usage: GET <key>
+ *
+ * See the set() procedure for a full list of options.
+ *
+ * @param argv the argument vector
+ */
+void get(char **argv);
+
+/**
+ * Handles a command to load a file to obtain options or
+ * kernels.
+ *
+ * Usage: LOAD <OPTIONS | KERNEL> <filename>
+ *
+ * @param argv the argument vector
+ */
+void load(char **argv);
+
+/**
+ * Handles a command to show tables.
+ *
+ * Usage: SHOW <TABLES>
+ *
+ * @param argv the argument vector
+ */
+void show(char **argv);
 
 #endif // GATE_COMMANDS_H

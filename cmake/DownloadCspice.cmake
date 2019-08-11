@@ -2,7 +2,6 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-# TODO: Possibly integrate cross-platform compat here
 include(FetchContent)
 FetchContent_Declare(
         cspice

@@ -54,6 +54,8 @@ void handle_input() {
     }
 
     handle_tokens(argc, argv);
+
+    free(argv);
 }
 
 void handle_tokens(int argc, char **argv) {
