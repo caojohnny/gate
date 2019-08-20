@@ -208,6 +208,7 @@ void load(int argc, char **argv, volatile int *is_running) {
             if (c == EOF || c == '\n') {
                 // Process and clear the line if available
                 if (cmd_file_argc > 0) {
+                    cmd_file_argv[cmd_file_argc - 1][ch_idx_counter] = '\0';
                     dispatch(cmd_file_argc, cmd_file_argv, is_running);
 
                     for (int i = 0; i < cmd_file_argc; ++i) {
@@ -457,10 +458,9 @@ static void star_azel(char **argv, volatile int *is_running) {
                 *is_running = SPICETRUE;
                 break;
             }
-
-            puts("");
         }
 
+        puts("");
         sleep(1);
 
         SpiceDouble current_et;
