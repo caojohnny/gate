@@ -109,6 +109,9 @@ void gate_load_earth_topo_frame(ConstSpiceChar *frame_name,
     gate_load_topo_frame(frame_name, 399, latitude, longitude, observer_radius, topo_frame);
 }
 
+// TODO: I'm not actually sure this gets me to the actual topographic
+// point - is the Z axis orthogonal to the goedetic observation plane
+// or geocentric plane?
 void gate_adjust_topo_rec(gate_topo_frame topo_frame, SpiceDouble *rec) {
     rec[2] -= topo_frame.radius;
 }

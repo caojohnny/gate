@@ -19,6 +19,16 @@
 #include <cspice/SpiceUsr.h>
 #include <time.h>
 
+#define NS_PER_SEC 1000000000
+
+/**
+ * Obtains the current ephemeris time with nanosecond
+ * accuracy.
+ *
+ * @param et the current ephemeris time (output)
+ */
+void gate_et_now(SpiceDouble *et);
+
 /**
  * Converts a broken-down date in UTC to an ephemeris time
  * value.

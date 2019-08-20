@@ -6,7 +6,7 @@
 #include "clihandler.h"
 #include "dispatcher.h"
 
-#define MAX_BUFFER_LEN 500
+#define MAX_BUFFER_LEN 1000
 
 static volatile int is_running = 1;
 
@@ -16,6 +16,7 @@ void handle_cli() {
 
     while (is_running) {
         handle_input();
+        puts("");
     }
 }
 

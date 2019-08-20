@@ -6,30 +6,28 @@
 void dispatch(int argc, char **argv, volatile int *is_running) {
     char *label = argv[0];
 
-    if (argc == 1) {
-        if (eq_ignore_case("HELP", label)) {
-            return help();
-        }
+    if (eq_ignore_case("HELP", label)) {
+        return help();
     }
 
-    if (argc == 2) {
-        if (eq_ignore_case("GET", label)) {
-            return get(argv);
-        }
-
-        if (eq_ignore_case("SHOW", label)) {
-            return show(argv);
-        }
+    if (eq_ignore_case("GET", label)) {
+        return get(argc, argv);
     }
 
-    if (argc == 3) {
-        if (eq_ignore_case("SET", label)) {
-            return set(argv);
-        }
+    if (eq_ignore_case("SHOW", label)) {
+        return show(argc, argv);
+    }
 
-        if (eq_ignore_case("LOAD", label)) {
-            return load(argv);
-        }
+    if (eq_ignore_case("SET", label)) {
+        return set(argc, argv);
+    }
+
+    if (eq_ignore_case("LOAD", label)) {
+        return load(argc, argv, is_running);
+    }
+
+    if (eq_ignore_case("STAR", label)) {
+        return star(argc, argv, is_running);
     }
 
     puts("Command not recognized. Try typing 'HELP'");

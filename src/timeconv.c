@@ -1,8 +1,14 @@
 #include "timeconv.h"
 #include <stdio.h>
 
-#define NS_PER_SEC 1000000000
 #define TIMECONV_BUFFER_LEN 100
+
+void gate_et_now(SpiceDouble *et) {
+    struct timespec current;
+    clock_gettime(CLOCK_REALTIME, &current);
+
+    gate_unix_clock_to_et(current, et);
+}
 
 void gate_unix_utc_to_et(struct tm date, SpiceDouble *et) {
     gate_unix_utc_ns_to_et(date, 0, et);
