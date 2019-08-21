@@ -5,8 +5,7 @@
 #include <cspice/SpiceUsr.h>
 #include "clihandler.h"
 #include "dispatcher.h"
-
-#define MAX_BUFFER_LEN 1000
+#include "util.h"
 
 static volatile int is_running = 1;
 
@@ -60,6 +59,10 @@ void handle_input() {
 }
 
 void handle_tokens(int argc, char **argv) {
+    if (argc == 1 && eq_ignore_case("exit", argv[0])) {
+        exit(0);
+    }
+
     dispatch(argc, argv, &is_running);
 }
 

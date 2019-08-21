@@ -18,7 +18,11 @@
 #define TIME_OUT_MAX_LEN 30
 
 void help() {
+    puts("You can Ctrl+C any time to halt continuous output");
+    puts("");
+
     puts("--- HELP ---");
+    puts("EXIT - Quits the command line");
     puts("HELP - prints this message");
     puts("LOAD <CMD | KERNEL> <filename> - loads a set of commands or a kernel from file");
     puts("SET <option> <value> - sets the value of a particular option");
@@ -27,6 +31,7 @@ void help() {
     puts("STAR INFO <catalog number> - prints information for a star with the given catalog number");
     puts("STAR AZEL <CONT | count> <catalog number> <ISO time | NOW> - prints the observation position the star with the given catalog number");
     puts("");
+
     puts("--- OPTIONS ---");
     for (int i = 0; i < OPTION_KEY_LENGTH; ++i) {
         printf("%s\n", key_to_string(i));
@@ -189,6 +194,10 @@ void load(int argc, char **argv, volatile int *is_running) {
 
     if (eq_ignore_case("CMD", argv[1])) {
         FILE *cmd_file = fopen(argv[2], "r");
+        if (cmd_file == NULL) {
+            printf("Error occurred opening file handle for '%s'\n", argv[2]);
+            return;
+        }
 
         int ch_idx_counter = 0;
         int cmd_file_argc = 0;

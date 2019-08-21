@@ -6,6 +6,8 @@
 #ifndef GATE_CLIHANDLER_H
 #define GATE_CLIHANDLER_H
 
+#define MAX_BUFFER_LEN 1000
+
 /**
  * Called by a program to initiate the CLI handler loop,
  * which only exits when a SIGINT is received and is not
