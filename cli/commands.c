@@ -3,7 +3,6 @@
 #include <cspice/SpiceUsr.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <timeconv.h>
 #include <unistd.h>
 
@@ -16,6 +15,9 @@
 #define TAB_NAME_MAX_LEN 100
 #define FILTER_MAX_LEN 100
 #define TIME_OUT_MAX_LEN 30
+#define BODY_NAME_MAX_LEN 100
+#define NAIF_ID_MIN -100000     // These are arbitrary
+#define NAIF_ID_MAX 100000000
 
 void help() {
     puts("You can Ctrl+C any time to halt continuous output");
@@ -27,7 +29,7 @@ void help() {
     puts("LOAD <CMD | KERNEL> <filename> - loads a set of commands or a kernel from file");
     puts("SET <option> <value> - sets the value of a particular option");
     puts("GET <option> - prints the value of a particular option");
-    puts("SHOW <TABLES> - prints the available table names");
+    puts("SHOW <TABLES | BODIES> - prints the available table or body names");
     puts("STAR INFO <catalog number> - prints information for a star with the given catalog number");
     puts("STAR AZEL <CONT | count> <catalog number> <ISO time | NOW> - prints the observation position the star with the given catalog number");
     puts("");
@@ -302,6 +304,23 @@ void show(int argc, char **argv) {
 
             printf("%d: %s\n", i, table_name);
         }
+
+        return;
+    }
+
+    if (eq_ignore_case("BODIES", argv[1])) {
+        puts("Showing loaded body NAIF IDs and their respective names...");
+        puts("(This might take a while)");
+        for (int i = NAIF_ID_MIN; i < NAIF_ID_MAX; ++i) {
+            SpiceChar body_name[BODY_NAME_MAX_LEN];
+            SpiceBoolean found;
+            bodc2n_c(i, BODY_NAME_MAX_LEN, body_name, &found);
+
+            if (found) {
+                printf("%d: %s\n", i, body_name);
+            }
+        }
+
         return;
     }
 

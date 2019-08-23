@@ -59,7 +59,7 @@ void load(int argc, char **argv, volatile int *is_running);
 /**
  * Handles a command to show tables.
  *
- * Usage: SHOW <TABLES>
+ * Usage: SHOW <TABLES | BODIES>
  *
  * @param argc the number of arguments
  * @param argv the argument vector
