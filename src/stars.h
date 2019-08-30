@@ -111,17 +111,17 @@ void gate_parse_stars(SpiceInt max_size, gate_star_info_spice1 *array);
  * @param et the ephemeris time at which to determine the
  * new star position (input)
  * @param ra set by this procedure to represent the right
- * ascension of the star at the epoch time in the J2000
- * frame, or NULL if not desired (output)
+ * ascension of the star in degrees at the epoch time in
+ * the J2000 frame, or NULL if not desired (output)
  * @param dec set by this procedure to represent the
- * declination of the star at the epoch time in the J2000
- * frame, or NULL if not desired (output)
+ * declination of the star in degrees at the epoch time
+ * in the J2000 frame, or NULL if not desired (output)
  * @param ra_u set by this procedure to represent the
- * uncertainty in the output right ascension, or NULL if
- * not desired (output)
+ * uncertainty in the output right ascension in degrees,
+ * or NULL if not desired (output)
  * @param dec_u set by this procedure to represent the
- * uncertainty in the output declination, or NULL if not
- * desired (output)
+ * uncertainty in the output declination in degrees, or
+ * NULL if not desired (output)
  */
 void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
                         SpiceDouble *ra, SpiceDouble *dec, SpiceDouble *ra_u, SpiceDouble *dec_u);
@@ -145,10 +145,10 @@ void gate_calc_star_pos(gate_star_info_spice1 info, SpiceDouble et,
  * @param range the distance of the star from the position
  * of the observer in kilometers, or NULL if not desired
  * (output)
- * @param azimuth the viewing azimuth, in degrees from true
- * north, or NULL if not desired (output)
+ * @param azimuth the viewing azimuth, in degrees clockwise
+ * true north, or NULL if not desired (output)
  * @param elevation the viewing elevation, in degrees
- * from the observer's local horizon, or NULL if not desired
+ * above the observation plane, or NULL if not desired
  * (output)
  */
 void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 info, SpiceDouble et,

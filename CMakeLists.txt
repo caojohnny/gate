@@ -5,3 +5,4 @@ set(CMAKE_C_STANDARD 99)
 
 add_subdirectory(src)
 add_subdirectory(cli)
+add_subdirectory(snm)

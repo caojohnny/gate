@@ -15,7 +15,7 @@ void dispatch(int argc, char **argv, volatile int *is_running) {
     }
 
     if (eq_ignore_case("SHOW", label)) {
-        return show(argc, argv);
+        return show(argc, argv, is_running);
     }
 
     if (eq_ignore_case("SET", label)) {
@@ -28,6 +28,10 @@ void dispatch(int argc, char **argv, volatile int *is_running) {
 
     if (eq_ignore_case("STAR", label)) {
         return star(argc, argv, is_running);
+    }
+
+    if (eq_ignore_case("BODY", label)) {
+        return body(argc, argv, is_running);
     }
 
     puts("Command not recognized. Try typing 'HELP'");

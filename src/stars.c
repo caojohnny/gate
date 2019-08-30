@@ -106,21 +106,5 @@ void gate_calc_star_topo(gate_topo_frame observer_frame, gate_star_info_spice1 i
     mxv_c(frame_transform_matrix, star_pos_j2000_rec, star_topo_rec);
 
     gate_adjust_topo_rec(observer_frame, star_topo_rec);
-
-    SpiceDouble r;
-    SpiceDouble az;
-    SpiceDouble el;
-    recrad_c(star_topo_rec, &r, &az, &el);
-
-    if (range != NULL) {
-        *range = r;
-    }
-
-    if (azimuth != NULL) {
-        *azimuth = 360 - (az * dpr_c());
-    }
-
-    if (elevation != NULL) {
-        *elevation = el * dpr_c();
-    }
+    gate_conv_rec_azel(star_topo_rec, range, azimuth, elevation);
 }

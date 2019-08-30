@@ -123,6 +123,25 @@ void gate_conv_adjust_topo_rec(gate_topo_frame topo_frame, ConstSpiceChar *units
     rec[2] -= converted_radius;
 }
 
+void gate_conv_rec_azel(SpiceDouble *rec, SpiceDouble *rg, SpiceDouble *az, SpiceDouble *el) {
+    SpiceDouble range;
+    SpiceDouble azimuth;
+    SpiceDouble elevation;
+    recrad_c(rec, &range, &azimuth, &elevation);
+
+    if (rg != NULL) {
+        *rg = range;
+    }
+
+    if (az != NULL) {
+        *az = 360 - (azimuth * dpr_c());
+    }
+
+    if (el != NULL) {
+        *el = elevation * dpr_c();
+    }
+}
+
 void gate_unload_topo_frame(gate_topo_frame topo_frame) {
     ConstSpiceChar *frame_name = topo_frame.frame_name;
 

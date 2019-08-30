@@ -3,11 +3,23 @@
 cmake_minimum_required(VERSION 3.13)
 
 include(FetchContent)
-FetchContent_Declare(
-        cspice
-        URL http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
-        URL_HASH SHA256=93cd4fbce5818f8b7fecf3914c5756b8d41fd5bdaaeac1f4037b5a5410bc4768
-)
+if (UNIX)
+    if (NOT APPLE)
+        message("Downloading CSPICE for Linux")
+        FetchContent_Declare(
+                cspice
+                URL http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
+                URL_HASH SHA256=93cd4fbce5818f8b7fecf3914c5756b8d41fd5bdaaeac1f4037b5a5410bc4768
+        )
+    else ()
+        message("Downloading CSPICE for Mac OSX")
+        FetchContent_Declare(
+                cspice
+                URL https://naif.jpl.nasa.gov/pub/naif/toolkit//C/MacIntel_OSX_AppleC_64bit/packages/cspice.tar.Z
+                URL_HASH SHA256=f5d48c4b0d558c5d71e8bf6fcdf135b0943210c1ff91f8191dfc447419a6b12e
+        )
+    endif ()
+endif ()
 FetchContent_Populate(cspice)
 
 FetchContent_GetProperties(cspice)

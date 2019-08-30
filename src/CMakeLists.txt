@@ -8,3 +8,5 @@ target_include_directories(gate PUBLIC .)
 target_link_libraries(gate
         PUBLIC cspice
         PUBLIC m)
+
+# TODO: Needs to perform target installation

@@ -31,7 +31,9 @@ void help() {
     puts("GET <option> - prints the value of a particular option");
     puts("SHOW <TABLES | BODIES> - prints the available table or body names");
     puts("STAR INFO <catalog number> - prints information for a star with the given catalog number");
-    puts("STAR AZEL <CONT | count> <catalog number> <ISO time | NOW> - prints the observation position the star with the given catalog number");
+    puts("STAR AZEL <catalog number> <CONT | count> <ISO time | NOW> - prints the observation position the star with the given catalog number");
+    puts("BODY INFO <naif id> - prints information for a body with the given NAIF ID");
+    puts("BODY AZEL <naif id> <CONT | count> <ISO time | NOW> - prints the observation position the body with the given NAIF ID");
     puts("");
 
     puts("--- OPTIONS ---");
@@ -284,7 +286,7 @@ void load(int argc, char **argv, volatile int *is_running) {
     printf("Unrecognized option: '%s'\n", argv[1]);
 }
 
-void show(int argc, char **argv) {
+void show(int argc, char **argv, volatile int *is_running) {
     if (argc != 2) {
         puts("This command requires 1 argument");
         return;
@@ -312,6 +314,11 @@ void show(int argc, char **argv) {
         puts("Showing loaded body NAIF IDs and their respective names...");
         puts("(This might take a while)");
         for (int i = NAIF_ID_MIN; i < NAIF_ID_MAX; ++i) {
+            if (!*is_running) {
+                *is_running = SPICETRUE;
+                return;
+            }
+
             SpiceChar body_name[BODY_NAME_MAX_LEN];
             SpiceBoolean found;
             bodc2n_c(i, BODY_NAME_MAX_LEN, body_name, &found);
@@ -414,7 +421,7 @@ static void star_azel(char **argv, volatile int *is_running) {
         is_cont = SPICETRUE;
     } else {
         char *end;
-        count = strtod(argv[3], &end);
+        count = strtol(argv[3], &end, 10);
         if (argv[3] == end) {
             printf("Not a valid number: %s\n", argv[3]);
             return;
@@ -456,6 +463,8 @@ static void star_azel(char **argv, volatile int *is_running) {
     gate_star_info_spice1 stars[rows];
     gate_parse_stars(rows, stars);
 
+    printf("Printing azimuth/elevation for star '%s' in table '%s'\n\n", argv[2], table_name);
+
     SpiceDouble loop_start_et;
     gate_et_now(&loop_start_et);
 
@@ -464,8 +473,7 @@ static void star_azel(char **argv, volatile int *is_running) {
         SpiceChar calc_time_out[TIME_OUT_MAX_LEN];
         timout_c(calc_et, "YYYY-MM-DD HR:MN:SC.#### UTC ::UTC", TIME_OUT_MAX_LEN, calc_time_out);
 
-        printf("Azimuth/elevation for star with catalog number %s in table '%s' at %s:\n",
-               argv[2], table_name, calc_time_out);
+        printf("%s:\n", calc_time_out);
 
         for (int i = 0; i < rows; ++i) {
             gate_star_info_spice1 info = stars[i];
@@ -504,6 +512,11 @@ static void star_azel(char **argv, volatile int *is_running) {
 }
 
 void star(int argc, char **argv, volatile int *is_running) {
+    if (argc < 2) {
+        puts("This command requires at least 1 argument");
+        return;
+    }
+
     if (eq_ignore_case("INFO", argv[1])) {
         if (argc != 3) {
             puts("This command requires 1 argument");
@@ -521,4 +534,168 @@ void star(int argc, char **argv, volatile int *is_running) {
     }
 
     printf("Unrecognized option: '%s'\n", argv[1]);
+}
+
+static void body_info(char *naif_id_string) {
+    char *naif_id_string_end;
+    SpiceInt naif_id = strtol(naif_id_string, &naif_id_string_end, 10);
+    if (naif_id_string == naif_id_string_end) {
+        printf("'%s' is not a valid NAIF ID\n", naif_id_string);
+        return;
+    }
+
+    SpiceChar body_name[BODY_NAME_MAX_LEN];
+    SpiceBoolean found;
+    bodc2n_c(naif_id, BODY_NAME_MAX_LEN, body_name, &found);
+
+    if (!found) {
+        printf("No body with NAIF ID '%s'. Try LOAD KERNEL?\n", naif_id_string);
+        return;
+    }
+
+    printf("Info for body with NAIF ID '%s':\n\n", naif_id_string);
+    printf("Body name: %s\n", body_name);
+}
+
+static void body_azel(char **argv, volatile int *is_running) {
+    char *naif_id_string_end;
+    SpiceInt naif_id = strtol(argv[2], &naif_id_string_end, 10);
+    if (argv[2] == naif_id_string_end) {
+        printf("'%s' is not a valid NAIF ID\n", argv[2]);
+        return;
+    }
+
+    SpiceChar body_name[BODY_NAME_MAX_LEN];
+    SpiceBoolean found;
+    bodc2n_c(naif_id, BODY_NAME_MAX_LEN, body_name, &found);
+
+    if (!found) {
+        printf("No body with NAIF ID '%s'. Try LOAD KERNEL?\n", argv[2]);
+        return;
+    }
+
+    SpiceBoolean is_cont = SPICEFALSE;
+    SpiceInt count;
+    if (eq_ignore_case("CONT", argv[3])) {
+        is_cont = SPICETRUE;
+    } else {
+        char *end;
+        count = strtol(argv[3], &end, 10);
+        if (argv[3] == end) {
+            printf("Not a valid number: %s\n", argv[3]);
+            return;
+        }
+    }
+
+    SpiceDouble calc_et;
+    if (eq_ignore_case("NOW", argv[4])) {
+        gate_et_now(&calc_et);
+    } else {
+        str2et_c(argv[4], &calc_et);
+    }
+
+    char *observer_body = (char *) check_and_get_option(OBSERVER_BODY);
+    if (observer_body == NULL) {
+        return;
+    }
+
+    SpiceInt observer_body_id;
+    SpiceBoolean observer_body_id_found;
+    bodn2c_c(observer_body, &observer_body_id, &observer_body_id_found);
+    if (!observer_body_id_found) {
+        printf("No NAIF ID was found for body '%s'! Try LOAD KERNEL?\n", observer_body);
+        return;
+    }
+
+    SpiceDouble *observer_latitude_opt = (double *) check_and_get_option(OBSERVER_LATITUDE);
+    SpiceDouble *observer_longitude_opt = (double *) check_and_get_option(OBSERVER_LONGITUDE);
+    if (observer_latitude_opt == NULL || observer_longitude_opt == NULL) {
+        return;
+    }
+
+    SpiceDouble observer_latitude = *observer_latitude_opt;
+    SpiceDouble observer_longitude = *observer_longitude_opt;
+
+    gate_topo_frame observer_frame;
+    gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0, &observer_frame);
+
+    printf("Printing azimuth/elevation for NAIF ID '%s' (%s)\n\n", argv[2], body_name);
+
+    SpiceDouble loop_start_et;
+    gate_et_now(&loop_start_et);
+
+    int rounds = 0;
+    while (SPICETRUE) {
+        SpiceChar calc_time_out[TIME_OUT_MAX_LEN];
+        timout_c(calc_et, "YYYY-MM-DD HR:MN:SC.#### UTC ::UTC", TIME_OUT_MAX_LEN, calc_time_out);
+
+        printf("%s:\n", calc_time_out);
+
+        SpiceDouble state_vector[6];
+        SpiceDouble lt;
+        spkezr_c(body_name, calc_et, observer_frame.frame_name, "CN+S", observer_body,
+                state_vector, &lt);
+
+        SpiceDouble azimuth;
+        SpiceDouble elevation;
+        gate_conv_rec_azel(state_vector, NULL, &azimuth, &elevation);
+        printf("Azimuth=%f Elevation=%f\n", azimuth, elevation);
+
+        if (!is_cont) {
+            rounds++;
+            if (rounds == count) {
+                break;
+            }
+        } else {
+            if (!*is_running) {
+                *is_running = SPICETRUE;
+                break;
+            }
+        }
+
+        puts("");
+        sleep(1);
+
+        SpiceDouble current_et;
+        gate_et_now(&current_et);
+
+        SpiceDouble elapsed = current_et - loop_start_et;
+        loop_start_et = current_et;
+
+        calc_et += elapsed;
+    }
+
+    gate_unload_topo_frame(observer_frame);
+}
+
+void body(int argc, char **argv, volatile int *is_running) {
+    if (argc < 2) {
+        puts("This command requires at least 1 argument");
+        return;
+    }
+
+    if (eq_ignore_case("INFO", argv[1])) {
+        if (argc != 3) {
+            puts("This command requires 1 argument");
+            return;
+        }
+        return body_info(argv[2]);
+    }
+
+    if (eq_ignore_case("AZEL", argv[1])) {
+        if (argc != 5) {
+            puts("This command requires 3 arguments");
+            return;
+        }
+        return body_azel(argv, is_running);
+    }
+
+    printf("Unrecognized option: '%s'\n", argv[1]);
+}
+
+// TODO: Implement
+void sat(int argc, char **argv, volatile int *is_running) {
+}
+
+void calc(int argc, char **argv, volatile int *is_running) {
 }

@@ -63,8 +63,10 @@ void load(int argc, char **argv, volatile int *is_running);
  *
  * @param argc the number of arguments
  * @param argv the argument vector
+ * @param is_running whether or not the program is or
+ * should be running
  */
-void show(int argc, char **argv);
+void show(int argc, char **argv, volatile int *is_running);
 
 /**
  * Handles a command to show star info or observation
@@ -72,7 +74,7 @@ void show(int argc, char **argv);
  *
  * Usage:
  * - STAR INFO <catalog number>
- * - STAR AZEL <CONT | count> <catalog number>
+ * - STAR AZEL <catalog number> <CONT | count>
  *   <ISO time | NOW>
  *
  * @param argc the number of arguments
@@ -81,5 +83,49 @@ void show(int argc, char **argv);
  * should be running
  */
 void star(int argc, char **argv, volatile int *is_running);
+
+/**
+ * Handles a command to show body info or observation
+ * position.
+ *
+ * Usage:
+ * - BODY INFO <naif id>
+ * - BODY AZEL <naif id> <CONT | count>
+ *   <ISO time | NOW>
+ *
+ * @param argc the number of arguments
+ * @param argv the argument vector
+ * @param is_running whether or not the program is or
+ * should be running
+ */
+void body(int argc, char **argv, volatile int *is_running);
+
+/**
+ * Handles a command to show satellite info or observation
+ * position of a satellite given a TLE element set.
+ *
+ * Usage: TBD
+ *
+ * @param argc the number of arguments
+ * @param argv the argument vector
+ * @param is_running whether or not the program is or
+ * should be running
+ */
+void sat(int argc, char **argv, volatile int *is_running);
+
+/**
+ * Perform a calculation on the observation position of
+ * some other miscellaneous body, such as supernovae,
+ * deep-space satellites or other bodies that do not have a
+ * kernel or traditional data set.
+ *
+ * Usage: TBD
+ *
+ * @param argc the number of arguments
+ * @param argv the argument vector
+ * @param is_running whether or not the program is or
+ * should be running
+ */
+void calc(int argc, char **argv, volatile int *is_running);
 
 #endif // GATE_COMMANDS_H

@@ -105,12 +105,12 @@ typedef struct {
  * unique (input)
  * @param body_id the NAIF ID of the body on which to
  * create a topographic frame (input)
- * @param latitude the latitude of the observer on the
- * surface of the body, -90 to 90 to represent 90S and 90N
- * (input)
- * @param longitude the longitude of the observer on the
- * surface of the body, -180 to 180 to represent 180W and
- * 180E (input)
+ * @param latitude the geodetic latitude of the observer on
+ * the surface of the body, -90 to 90 to represent 90S and
+ * 90N (input)
+ * @param longitude the geodetic longitude of the observer
+ * on the surface of the body, -180 to 180 to represent
+ * 180W and 180E (input)
  * @param radius the distance of the observer from the
  * center of the body. This is not incorporated into the
  * frame, but it will be available in the output
@@ -159,12 +159,12 @@ void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
  * @param frame_name the name under which to configure a
  * new topographic frame. This is arbitrary and should be
  * unique.
- * @param latitude the latitude of the observer on the
- * surface of the Earth, -90 to 90 to represent 90S and 90N
- * (input)
- * @param longitude the longitude of the observer on the
- * surface of the Earth, -180 to 180 to represent 180W and
- * 180E (input)
+ * @param latitude the geodetic latitude of the observer on
+ * the surface of the Earth, -90 to 90 to represent 90S and
+ * 90N (input)
+ * @param longitude the geodetic longitude of the observer
+ * on the surface of the Earth, -180 to 180 to represent
+ * 180W and 180E (input)
  * @param height the height of the observer off of the
  * Earth's geodetic spheroid in kilometers at that
  * location, or 0 to use the geodetic radius, or NAN to use
@@ -223,6 +223,25 @@ void gate_adjust_topo_rec(gate_topo_frame topo_frame, SpiceDouble *rec);
  * surface of the body instead of the center (input/output)
  */
 void gate_conv_adjust_topo_rec(gate_topo_frame topo_frame, ConstSpiceChar *units, SpiceDouble *rec);
+
+/**
+ * Helper procedure to convert topographic or topocentric
+ * rectangular coordinates into range, azimuth, and
+ * elevation.
+ *
+ * @param rec the topographic rectangular coordinates to
+ * convert (input)
+ * @param rg the range, or distance from the origin of the
+ * topographic reference frame to the target object, in
+ * the units of the rectangular coordinates passed in
+ * (output)
+ * @param az the azimuth of the target body in degrees
+ * clockwise true north, or NULL if not desired (output)
+ * @param el the elevation of the target body in degrees
+ * above the observation plane, or NULL if not desired
+ * (output)
+ */
+void gate_conv_rec_azel(SpiceDouble *rec, SpiceDouble *rg, SpiceDouble *az, SpiceDouble *el);
 
 /**
  * Unloads a given topographic frame from the kernel
