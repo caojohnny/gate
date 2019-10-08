@@ -1,7 +1,18 @@
+/**
+ * SNM stands for "Star Name Mapper," which is basically a
+ * tool that was written to parse the IAU-CSN.txt file
+ * into a useful data structure. Because the provided SPICE
+ * 1 formatted star catalogs do not have star names
+ * mapped, this adds support for name lookups based on
+ * catalog IDs, hence the name. In addition to name lookup,
+ * other information available in the IAU-CSN data file is
+ * also parsed, some available in those catalogs, some not.
+ */
+
 #ifndef GATE_SNM_H
 #define GATE_SNM_H
 
-// TODO: Implement
+#include <stdio.h>
 
 /**
  * Structure representing a row of data from the IAU
@@ -45,5 +56,18 @@ typedef struct {
     int date_month;
     int date_day;
 } csn_data;
+
+/**
+ * Parses the IAU-CSN.txt file into an array of
+ * {@code csn_data}.
+ *
+ * @param file the file which to parse the data from
+ * (input)
+ * @param parsed_data_len the length of the
+ * {@code parsed_data} array (output)
+ * @param parsed_data the array populated with the
+ * parsed star data (output)
+ */
+void snm_parse_data(FILE *file, int *parsed_data_len, csn_data **parsed_data);
 
 #endif // GATE_SNM_H

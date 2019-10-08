@@ -280,6 +280,8 @@ void load(int argc, char **argv, volatile int *is_running) {
             arg[ch_idx] = c;
         }
 
+        fclose(cmd_file);
+
         return;
     }
 
@@ -634,7 +636,7 @@ static void body_azel(char **argv, volatile int *is_running) {
         SpiceDouble state_vector[6];
         SpiceDouble lt;
         spkezr_c(body_name, calc_et, observer_frame.frame_name, "CN+S", observer_body,
-                state_vector, &lt);
+                 state_vector, &lt);
 
         SpiceDouble azimuth;
         SpiceDouble elevation;

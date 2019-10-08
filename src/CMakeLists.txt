@@ -3,7 +3,11 @@ project(libgate VERSION 1.0 LANGUAGES C)
 
 include(../cmake/DownloadCspice.cmake)
 
-add_library(gate topo.h topo.c stars.c stars.h constants.h timeconv.c timeconv.h)
+add_library(gate
+        topo.h topo.c
+        stars.c stars.h
+        timeconv.c timeconv.h
+        constants.h)
 target_include_directories(gate PUBLIC .)
 target_link_libraries(gate
         PUBLIC cspice

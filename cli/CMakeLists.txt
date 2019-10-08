@@ -9,4 +9,5 @@ add_executable(gatecli
         options.c options.h
         util.c util.h)
 target_link_libraries(gatecli
-        PRIVATE gate)
+        PRIVATE gate
+        PRIVATE gatesnm)
