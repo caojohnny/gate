@@ -45,9 +45,12 @@ void get(int argc, char **argv);
 
 /**
  * Handles a command to load a file to obtain options or
- * kernels.
+ * kernels or an IAU Catalog of Star Names.
  *
- * Usage: LOAD <CMD | KERNEL> <filename>
+ * The CSN file can be found at
+ * https://www.pas.rochester.edu/~emamajek/WGSN/IAU-CSN.txt
+ *
+ * Usage: LOAD <CMD | KERNEL | CSN> <filename>
  *
  * @param argc the number of arguments
  * @param argv the argument vector
@@ -59,7 +62,7 @@ void load(int argc, char **argv, volatile int *is_running);
 /**
  * Handles a command to show tables.
  *
- * Usage: SHOW <TABLES | BODIES>
+ * Usage: SHOW <TABLES | CSN | BODIES>
  *
  * @param argc the number of arguments
  * @param argv the argument vector
@@ -115,9 +118,9 @@ void sat(int argc, char **argv, volatile int *is_running);
 
 /**
  * Perform a calculation on the observation position of
- * some other miscellaneous body, such as supernovae,
- * deep-space satellites or other bodies that do not have a
- * kernel or traditional data set.
+ * some other miscellaneous body, such as supernovae
+ * or other bodies that do not have a  kernel or
+ * NAIF data set.
  *
  * Usage: TBD
  *

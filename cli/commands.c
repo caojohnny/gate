@@ -5,6 +5,7 @@
 #include <string.h>
 #include <timeconv.h>
 #include <unistd.h>
+#include <snm.h>
 
 #include "stars.h"
 #include "topo.h"
@@ -19,6 +20,9 @@
 #define NAIF_ID_MIN -100000     // These are arbitrary
 #define NAIF_ID_MAX 100000000
 
+static int csn_data_len = -1;
+static csn_data *csn_data_array;
+
 void help() {
     puts("You can Ctrl+C any time to halt continuous output");
     puts("");
@@ -26,10 +30,10 @@ void help() {
     puts("--- HELP ---");
     puts("EXIT - Quits the command line");
     puts("HELP - prints this message");
-    puts("LOAD <CMD | KERNEL> <filename> - loads a set of commands or a kernel from file");
+    puts("LOAD <CMD | KERNEL | CSN> <filename> - loads a set of commands or a kernel or CSN from file");
     puts("SET <option> <value> - sets the value of a particular option");
     puts("GET <option> - prints the value of a particular option");
-    puts("SHOW <TABLES | BODIES> - prints the available table or body names");
+    puts("SHOW <TABLES | CSN | BODIES > - prints the available table, named star or body names");
     puts("STAR INFO <catalog number> - prints information for a star with the given catalog number");
     puts("STAR AZEL <catalog number> <CONT | count> <ISO time | NOW> - prints the observation position the star with the given catalog number");
     puts("BODY INFO <naif id> - prints information for a body with the given NAIF ID");
@@ -285,6 +289,22 @@ void load(int argc, char **argv, volatile int *is_running) {
         return;
     }
 
+    if (eq_ignore_case("CSN", argv[1])) {
+        FILE *file = fopen(argv[2], "r");
+        if (file == NULL) {
+            printf("No such file with name: %s\n", argv[2]);
+            fclose(file);
+            return;
+        }
+
+        snm_parse_data(file, &csn_data_len, &csn_data_array);
+
+        fclose(file);
+        printf("Parsed CSN file '%s'\n", argv[2]);
+
+        return;
+    }
+
     printf("Unrecognized option: '%s'\n", argv[1]);
 }
 
@@ -307,6 +327,21 @@ void show(int argc, char **argv, volatile int *is_running) {
             ektnam_c(0, TAB_NAME_MAX_LEN, table_name);
 
             printf("%d: %s\n", i, table_name);
+        }
+
+        return;
+    }
+
+    if (eq_ignore_case("CSN", argv[1])) {
+        if (csn_data_len == -1) {
+            puts("No CSN file loaded. Try LOAD CSN?");
+            return;
+        }
+
+        printf("Showing names for %d named stars:\n", csn_data_len);
+        for (int i = 0; i < csn_data_len; ++i) {
+            csn_data data = csn_data_array[i];
+            printf("%s (HIP %d)\n", data.name, data.hip);
         }
 
         return;
@@ -374,6 +409,24 @@ static void star_info(char *catalog_number) {
     gate_parse_stars(rows, parsed_stars);
     for (int i = 0; i < rows; ++i) {
         gate_star_info_spice1 info = parsed_stars[i];
+
+        char *name = NULL;
+        if (strcmp("HIPPARCOS", table_name) == 0) {
+            for (int j = 0; j < csn_data_len; ++j) {
+                csn_data data = csn_data_array[j];
+                if (data.hip == info.catalog_number) {
+                    name = data.name;
+                    break;
+                }
+            }
+
+            if (name == NULL) {
+                name = "(Unnamed star)";
+            }
+        } else {
+            name = "(Not supported for non-HIPPARCOS catalog)";
+        }
+
         printf("Catalog number: %d\n"
                "Declination: %f degrees\n"
                "Declination epoch: %f years since 1950\n"
@@ -388,12 +441,14 @@ static void star_info(char *catalog_number) {
                "Right ascension proper motion sigma: %f degrees per year\n"
                "Right ascension sigma: %f degrees\n"
                "Spectral type: %s\n"
-               "Visual magnitude: %f\n",
+               "Visual magnitude: %f\n"
+               "Name: %s\n",
                info.catalog_number,
                info.dec, info.dec_epoch, info.dec_pm, info.dec_pm_sigma, info.dec_sigma,
                info.dm_number, info.parallax,
                info.ra, info.ra_epoch, info.ra_pm, info.ra_pm_sigma, info.ra_sigma,
-               info.spectral_type, info.visual_magnitude);
+               info.spectral_type, info.visual_magnitude,
+               name);
 
         if (i != rows - 1) {
             puts("");
