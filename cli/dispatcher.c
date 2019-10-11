@@ -1,4 +1,3 @@
-#include "dispatcher.h"
 #include "commands.h"
 #include "util.h"
 #include <stdio.h>
@@ -32,6 +31,14 @@ void dispatch(int argc, char **argv, volatile int *is_running) {
 
     if (eq_ignore_case("BODY", label)) {
         return body(argc, argv, is_running);
+    }
+
+    if (eq_ignore_case("SAT", label)) {
+        return sat(argc, argv, is_running);
+    }
+
+    if (eq_ignore_case("CALC", label)) {
+        return calc(argc, argv, is_running);
     }
 
     puts("Command not recognized. Try typing 'HELP'");

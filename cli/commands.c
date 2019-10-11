@@ -23,6 +23,10 @@
 static int csn_data_len = -1;
 static csn_data *csn_data_array;
 
+static int sat_data_len = -1;
+
+static int calc_data_len = -1;
+
 void help() {
     puts("You can Ctrl+C any time to halt continuous output");
     puts("");
@@ -35,9 +39,16 @@ void help() {
     puts("GET <option> - prints the value of a particular option");
     puts("SHOW <TABLES | CSN | BODIES > - prints the available table, named star or body names");
     puts("STAR INFO <catalog number> - prints information for a star with the given catalog number");
-    puts("STAR AZEL <catalog number> <CONT | count> <ISO time | NOW> - prints the observation position the star with the given catalog number");
+    puts("STAR AZEL <catalog number> <CONT | count> <ISO time | NOW> - prints the observation position for the star with the given catalog number");
     puts("BODY INFO <naif id> - prints information for a body with the given NAIF ID");
-    puts("BODY AZEL <naif id> <CONT | count> <ISO time | NOW> - prints the observation position the body with the given NAIF ID");
+    puts("BODY AZEL <naif id> <CONT | count> <ISO time | NOW> - prints the observation position for the satellite with the given NAIF ID");
+    puts("SAT INFO <id> - prints information for a satellite with the given NAIF ID");
+    puts("SAT AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation position for the calculated body with the given NAIF ID");
+    puts("CALC INFO <id> - prints information for a body with the given NAIF ID");
+    puts("CALC AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation for position the calculated body with the given NAIF ID");
+
+    // TODO - SAT/CALC ADD/REM
+
     puts("");
 
     puts("--- OPTIONS ---");
