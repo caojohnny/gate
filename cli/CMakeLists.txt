@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 project(gatecli VERSION 1.0 LANGUAGES C)
 
+find_package(gate 1.0 REQUIRED)
+find_package(gatesnm 1.0 REQUIRED)
+
 add_executable(gatecli
         main.c
         clihandler.c clihandler.h

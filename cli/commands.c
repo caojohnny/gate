@@ -1,14 +1,14 @@
-#include "commands.h"
 #include <stdio.h>
 #include <cspice/SpiceUsr.h>
 #include <stdlib.h>
 #include <string.h>
 #include <timeconv.h>
 #include <unistd.h>
-#include <snm.h>
 
-#include "stars.h"
-#include "topo.h"
+#include <gate/stars.h>
+#include <gate/topo.h>
+#include <gatesnm/snm.h>
+
 #include "options.h"
 #include "util.h"
 #include "dispatcher.h"
@@ -761,7 +761,6 @@ void body(int argc, char **argv, volatile int *is_running) {
     printf("Unrecognized option: '%s'\n", argv[1]);
 }
 
-// TODO: Implement
 void sat(int argc, char **argv, volatile int *is_running) {
 }
 

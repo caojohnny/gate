@@ -1,5 +1,6 @@
 #include <cspice/SpiceUsr.h>
 #include <stdio.h>
+
 #include "clihandler.h"
 
 void load_cmd_files(int argc, char **argv) {
