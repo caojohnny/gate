@@ -16,12 +16,4 @@
  */
 int eq_ignore_case(const char *one, const char *two);
 
-/**
- * Checks to see whether the given string is empty.
- *
- * @param string the string to check
- * @return 1 to indicate emptiness, 0 otherwise
- */
-int is_empty(const char *string);
-
 #endif // GATE_UTIL_H

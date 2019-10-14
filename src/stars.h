@@ -1,8 +1,9 @@
 /**
+ * @file
  * Support for manipulating star data.
  *
  * NAIF undertook efforts to support stars in the SPICE
- * Toolkit long ago [1], however, these efforts stopped
+ * Toolkit long ago [[1]]. However, these efforts stopped
  * and it appears that the only elements of those efforts
  * that remain in the modern SPICE Toolkit appears to be
  * perhaps aberration corrections and the leftover binary
@@ -70,8 +71,8 @@ typedef struct {
  * @param table the name of the table which to load the
  * star data into memory (input)
  * @param filter a filter string, which starts with either
- * {@code WHERE} and/or {@code ORDER} if a filter is
- * desired, otherwise {@code NULL} (input)
+ * `WHERE` and/or `ORDER` if a filter is desired, otherwise
+ * `NULL` (input)
  * @param rows the number of rows that match the query
  * (output)
  *
@@ -102,9 +103,9 @@ void gate_parse_stars(SpiceInt max_size, gate_star_info_spice1 *array);
 
 /**
  * Calculates the new position of the star at the given
- * ephemeris time, {@code et}, which accounts for the
- * proper motion of stars over the length of time from
- * which the position was first determined.
+ * ephemeris time, `et`, which accounts for the proper
+ * motion of stars over the length of time from which the
+ * position was first determined.
  *
  * @param info the information representing the star which
  * to determine the new star position (input)

@@ -1,4 +1,5 @@
 /**
+ * @file
  * Defines constants that don't necessarily fit within
  * support files for one feature or another.
  */

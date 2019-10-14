@@ -1,4 +1,5 @@
 /**
+ * @file
  * Time conversion helpers for Unix systems.
  *
  * Only wrapper procedures are provided for the purpose

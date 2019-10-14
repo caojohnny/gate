@@ -1,4 +1,5 @@
 /**
+ * @file
  * Support for topocentric/topographic frames.
  *
  * The SPICE "built-in" reference frames do not bundle
@@ -8,9 +9,9 @@
  * which are fixed on the center of a planet but are non-
  * inertial (meaning that they rotate with the body, and
  * the orientation is therefore fixed to the crust), such
- * as {@code IAU_EARTH} and {@code ITRF93} exist, they are
- * difficult to use when the observation plane is centered
- * around an observer located on the surface of that body.
+ * as `IAU_EARTH` and `ITRF93` exist, they are difficult to
+ * use when the observation plane is centered around an
+ * observer located on the surface of that body.
  *
  * A topographic frame is defined by an offset from a
  * standard body-fixed frame in order to describe the
@@ -54,9 +55,9 @@
  * Represents a topocentric frame.
  *
  * This contains information about a loaded topographic
- * frame, but also has an extra {@code radius} field
- * to define the entire position of the observer relative
- * to the center of the provided body. While this is not
+ * frame, but also has an extra `radius` field to define
+ * the entire position of the observer relative to the
+ * center of the provided body. While this is not
  * incorporated into the loaded topographic frame, it can
  * be used to make adjustments to a rectangular topographic
  * coordinate  vector in order to transform it into a
@@ -91,10 +92,10 @@ typedef struct {
  * transformations, the radius of the body is not
  * accounted for by the loaded reference frame. The
  * provided radius parameter is not used to load the
- * reference frame. However, the output {@code topo_frame}
- * can be used in conjunction with provided procedures
- * such as gate_adjust_topo_rec() in order to take into
- * account the difference between the center positions of
+ * reference frame. However, the output `topo_frame can be
+ * used in conjunction with provided procedures such as
+ * gate_adjust_topo_rec() in order to take into account
+ * the difference between the center positions of
  * topographic and topocentric frames.
  *
  * Frame names are limited to 26 characters to avoid
@@ -147,11 +148,11 @@ void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
  * transformations, the radius of the body is not
  * accounted for by the loaded reference frame. The
  * provided radius parameter is not used to load the
- * reference frame. However, the output {@code topo_frame}
- * can be used in conjunction with provided procedures
- * such as gate_adjust_topo_rec() in order to take into
- * account the difference between the center positions of
- * topographic and topocentric frames.
+ * reference frame. However, the output `topo_frame can be
+ * used in conjunction with provided procedures such as
+ * gate_adjust_topo_rec() in order to take into account the
+ * difference between the center positions of topographic
+ * and topocentric frames.
  *
  * Frame names are limited to 26 characters to avoid
  * overflowing the kernel pool name limit (32).
@@ -246,11 +247,11 @@ void gate_conv_rec_azel(SpiceDouble *rec, SpiceDouble *rg, SpiceDouble *az, Spic
 /**
  * Unloads a given topographic frame from the kernel
  * variable pool by deleting the constants loaded by the
- * {@code load_topo_frame()} function.
+ * `load_topo_frame()` function.
  *
  * Method behavior not defined if the given reference frame
  * is not configured or if it was not loaded using the
- * {@code load_topo_frame()} function.
+ * `load_topo_frame()` function.
  *
  * @param topo_frame the topographic frame
  *

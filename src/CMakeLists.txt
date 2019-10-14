@@ -3,6 +3,7 @@ project(libgate VERSION 1.0 LANGUAGES C)
 
 include(CMakePackageConfigHelpers)
 include("${CMAKE_SOURCE_DIR}/cmake/DownloadCspice.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/Doxygen.cmake")
 
 add_library(gate
         topo.h topo.c
