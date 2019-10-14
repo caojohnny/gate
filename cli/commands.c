@@ -1,3 +1,4 @@
+#include "commands.h"
 #include <stdio.h>
 #include <cspice/SpiceUsr.h>
 #include <stdlib.h>
@@ -19,6 +20,8 @@
 #define BODY_NAME_MAX_LEN 100
 #define NAIF_ID_MIN -100000     // These are arbitrary
 #define NAIF_ID_MAX 100000000
+#define FRAME_NAME_MAX_LEN 33
+#define KERNEL_FRAMES_MAX_LEN 500
 
 static int csn_data_len = -1;
 static csn_data *csn_data_array;
@@ -26,6 +29,7 @@ static csn_data *csn_data_array;
 static int sat_data_len = -1;
 
 static int calc_data_len = -1;
+static calc_data *calc_data_array;
 
 void help() {
     puts("You can Ctrl+C any time to halt continuous output");
@@ -37,17 +41,20 @@ void help() {
     puts("LOAD <CMD | KERNEL | CSN> <filename> - loads a set of commands or a kernel or CSN from file");
     puts("SET <option> <value> - sets the value of a particular option");
     puts("GET <option> - prints the value of a particular option");
-    puts("SHOW <TABLES | CSN | BODIES > - prints the available table, named star or body names");
+    puts("SHOW <TABLES | FRAMES | CSN | BODIES | CALC> - prints the available table, frame, named star, body, or custom calc object names");
     puts("STAR INFO <catalog number> - prints information for a star with the given catalog number");
     puts("STAR AZEL <catalog number> <CONT | count> <ISO time | NOW> - prints the observation position for the star with the given catalog number");
     puts("BODY INFO <naif id> - prints information for a body with the given NAIF ID");
     puts("BODY AZEL <naif id> <CONT | count> <ISO time | NOW> - prints the observation position for the satellite with the given NAIF ID");
-    puts("SAT INFO <id> - prints information for a satellite with the given NAIF ID");
-    puts("SAT AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation position for the calculated body with the given NAIF ID");
-    puts("CALC INFO <id> - prints information for a body with the given NAIF ID");
-    puts("CALC AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation for position the calculated body with the given NAIF ID");
-
-    // TODO - SAT/CALC ADD/REM
+    // TODO - how to enter Keplerian elements?
+    puts("SAT ADD <id> - adds a satellite with the given ID to the internal database (non persistent)");
+    puts("SAT REM <id> - removes the satellite with the given ID from the internal database");
+    puts("SAT INFO <id> - prints information for a satellite added with the given ID");
+    puts("SAT AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation position for the satellite added with the given ID");
+    puts("CALC ADD <id> - adds a body with the given ID to the internal database (non persistent)");
+    puts("CALC REM <id> - removes a body with the given ID from the internal database");
+    puts("CALC INFO <id> - prints information for a custom calculated body with the given ID");
+    puts("CALC AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation for position the calculated body added with the given ID");
 
     puts("");
 
@@ -319,6 +326,22 @@ void load(int argc, char **argv, volatile int *is_running) {
     printf("Unrecognized option: '%s'\n", argv[1]);
 }
 
+static void print_frames(SpiceCell *frame_id_cells, char *frame_type) {
+    SpiceInt cells_len = card_c(frame_id_cells);
+    if (cells_len > 0) {
+        printf("Printing %d '%s' frames:\n", cells_len, frame_type);
+        for (int i = 0; i < cells_len; ++i) {
+            SpiceInt frame_id = ((SpiceInt *) frame_id_cells->data)[i];
+            SpiceChar frame_name[FRAME_NAME_MAX_LEN];
+            frmnam_c(frame_id, FRAME_NAME_MAX_LEN, frame_name);
+
+            printf("%d: %s\n", frame_id, frame_name);
+        }
+    } else {
+        printf("No '%s' frames found", frame_type);
+    }
+}
+
 void show(int argc, char **argv, volatile int *is_running) {
     if (argc != 2) {
         puts("This command requires 1 argument");
@@ -337,8 +360,22 @@ void show(int argc, char **argv, volatile int *is_running) {
             SpiceChar table_name[TAB_NAME_MAX_LEN];
             ektnam_c(0, TAB_NAME_MAX_LEN, table_name);
 
-            printf("%d: %s\n", i, table_name);
+            printf("%s\n", table_name);
         }
+
+        return;
+    }
+
+    if (eq_ignore_case("FRAMES", argv[1])) {
+        SPICEINT_CELL(blt_frames, SPICE_NFRAME_NINERT + SPICE_NFRAME_NNINRT);
+        bltfrm_c(SPICE_FRMTYP_ALL, &blt_frames);
+        print_frames(&blt_frames, "built-in");
+
+        puts("");
+
+        SPICEINT_CELL(k_frames, KERNEL_FRAMES_MAX_LEN);
+        kplfrm_c(SPICE_FRMTYP_ALL, &k_frames);
+        print_frames(&k_frames, "kernel-loaded");
 
         return;
     }
@@ -374,6 +411,21 @@ void show(int argc, char **argv, volatile int *is_running) {
             if (found) {
                 printf("%d: %s\n", i, body_name);
             }
+        }
+
+        return;
+    }
+
+    if (eq_ignore_case("CALC", argv[1])) {
+        if (calc_data_len < 1) {
+            printf("No custom objects added\n");
+            return;
+        }
+
+        printf("Showing %d custom body IDs:\n", calc_data_len);
+        for (int i = 0; i < calc_data_len; ++i) {
+            calc_data data = calc_data_array[i];
+            printf("%s\n", data.item_id);
         }
 
         return;
@@ -687,7 +739,7 @@ static void body_azel(char **argv, volatile int *is_running) {
     gate_topo_frame observer_frame;
     gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0, &observer_frame);
 
-    printf("Printing azimuth/elevation for NAIF ID '%s' (%s)\n\n", argv[2], body_name);
+    printf("Printing azimuth/elevation for body '%s' (%s)\n\n", argv[2], body_name);
 
     SpiceDouble loop_start_et;
     gate_et_now(&loop_start_et);
@@ -764,5 +816,163 @@ void body(int argc, char **argv, volatile int *is_running) {
 void sat(int argc, char **argv, volatile int *is_running) {
 }
 
+static void calc_add(int argc, char **argv) {
+}
+
+static void calc_rem(char *arg) {
+}
+
+static void calc_info(char *arg) {
+}
+
+static void calc_azel(char **argv, volatile int *is_running) {
+    calc_data body;
+    SpiceBoolean found = SPICEFALSE;
+    for (int i = 0; i < calc_data_len; ++i) {
+        calc_data data = calc_data_array[i];
+
+        if (eq_ignore_case(data.item_id, argv[2])) {
+            body = data;
+            found = SPICETRUE;
+        }
+    }
+
+    if (!found) {
+        printf("No custom body with ID '%s'. Try CALC ADD?\n", argv[2]);
+        return;
+    }
+
+    SpiceBoolean is_cont = SPICEFALSE;
+    SpiceInt count;
+    if (eq_ignore_case("CONT", argv[3])) {
+        is_cont = SPICETRUE;
+    } else {
+        char *end;
+        count = strtol(argv[3], &end, 10);
+        if (argv[3] == end) {
+            printf("Not a valid number: %s\n", argv[3]);
+            return;
+        }
+    }
+
+    SpiceDouble calc_et;
+    if (eq_ignore_case("NOW", argv[4])) {
+        gate_et_now(&calc_et);
+    } else {
+        str2et_c(argv[4], &calc_et);
+    }
+
+    char *observer_body = (char *) check_and_get_option(OBSERVER_BODY);
+    if (observer_body == NULL) {
+        return;
+    }
+
+    SpiceInt observer_body_id;
+    SpiceBoolean observer_body_id_found;
+    bodn2c_c(observer_body, &observer_body_id, &observer_body_id_found);
+    if (!observer_body_id_found) {
+        printf("No NAIF ID was found for body '%s'! Try LOAD KERNEL?\n", observer_body);
+        return;
+    }
+
+    SpiceDouble *observer_latitude_opt = (double *) check_and_get_option(OBSERVER_LATITUDE);
+    SpiceDouble *observer_longitude_opt = (double *) check_and_get_option(OBSERVER_LONGITUDE);
+    if (observer_latitude_opt == NULL || observer_longitude_opt == NULL) {
+        return;
+    }
+
+    SpiceDouble observer_latitude = *observer_latitude_opt;
+    SpiceDouble observer_longitude = *observer_longitude_opt;
+
+    gate_topo_frame observer_frame;
+    gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0, &observer_frame);
+
+    printf("Printing azimuth/elevation for custom ID '%s' (%s)\n\n", argv[2], body.item_id);
+
+    SpiceDouble loop_start_et;
+    gate_et_now(&loop_start_et);
+
+    int rounds = 0;
+    while (SPICETRUE) {
+        SpiceChar calc_time_out[TIME_OUT_MAX_LEN];
+        timout_c(calc_et, "YYYY-MM-DD HR:MN:SC.#### UTC ::UTC", TIME_OUT_MAX_LEN, calc_time_out);
+
+        printf("%s:\n", calc_time_out);
+
+        SpiceDouble rec[3];
+
+        // TODO - data format
+
+        SpiceDouble azimuth;
+        SpiceDouble elevation;
+        gate_conv_rec_azel(rec, NULL, &azimuth, &elevation);
+        printf("Azimuth=%f Elevation=%f\n", azimuth, elevation);
+
+        if (!is_cont) {
+            rounds++;
+            if (rounds == count) {
+                break;
+            }
+        } else {
+            if (!*is_running) {
+                *is_running = SPICETRUE;
+                break;
+            }
+        }
+
+        puts("");
+        sleep(1);
+
+        SpiceDouble current_et;
+        gate_et_now(&current_et);
+
+        SpiceDouble elapsed = current_et - loop_start_et;
+        loop_start_et = current_et;
+
+        calc_et += elapsed;
+    }
+
+    gate_unload_topo_frame(observer_frame);
+}
+
+
 void calc(int argc, char **argv, volatile int *is_running) {
+    if (argc < 2) {
+        puts("This command requires at least 1 argument");
+        return;
+    }
+
+    if (eq_ignore_case("ADD", argv[1])) {
+        if (argc != 3) {
+            puts("This command requires 1 argument");
+            return;
+        }
+        return calc_add(argc, argv);
+    }
+
+    if (eq_ignore_case("REM", argv[1])) {
+        if (argc != 3) {
+            puts("This command requires 1 argument");
+            return;
+        }
+        return calc_rem(argv[2]);
+    }
+
+    if (eq_ignore_case("INFO", argv[1])) {
+        if (argc != 3) {
+            puts("This command requires 1 argument");
+            return;
+        }
+        return calc_info(argv[2]);
+    }
+
+    if (eq_ignore_case("AZEL", argv[1])) {
+        if (argc != 5) {
+            puts("This command requires 3 arguments");
+            return;
+        }
+        return calc_azel(argv, is_running);
+    }
+
+    printf("Unrecognized option: '%s'\n", argv[1]);
 }

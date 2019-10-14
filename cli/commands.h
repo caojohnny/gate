@@ -6,6 +6,15 @@
 #ifndef GATE_COMMANDS_H
 #define GATE_COMMANDS_H
 
+typedef struct {
+    char *item_id;
+    char *frame;
+
+    double ra;
+    double dec;
+    double r;
+} calc_data;
+
 /**
  * Print the help message.
  */
@@ -62,7 +71,7 @@ void load(int argc, char **argv, volatile int *is_running);
 /**
  * Handles a command to show tables.
  *
- * Usage: SHOW <TABLES | CSN | BODIES>
+ * Usage: SHOW <TABLES | FRAMES | CSN | BODIES | CALC>
  *
  * @param argc the number of arguments
  * @param argv the argument vector
@@ -122,7 +131,11 @@ void sat(int argc, char **argv, volatile int *is_running);
  * or other bodies that do not have a  kernel or
  * NAIF data set.
  *
- * Usage: TBD
+ * Usage:
+ * - CALC ADD
+ * - CALC REM <id>
+ * - CALC INFO <id>
+ * - CALC AZEL <id> <CONT | count> <ISO time | NOW>
  *
  * @param argc the number of arguments
  * @param argv the argument vector
