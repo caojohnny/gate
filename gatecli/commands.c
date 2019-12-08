@@ -528,7 +528,7 @@ static void star_azel(char **argv, volatile int *is_running) {
     }
 
     SpiceInt rows;
-    gate_load_stars(table_name, "WHERE CATALOG_NUMBER = 70890", &rows);
+    gate_load_stars(table_name, filter, &rows);
     if (rows == 0) {
         printf("No stars found in table '%s' with catalog number '%s'\n", table_name, argv[2]);
         return;
