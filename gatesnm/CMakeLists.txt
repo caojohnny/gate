@@ -7,7 +7,7 @@ get_filename_component(PARENT_DIR "${MODULE_DIR}" DIRECTORY)
 add_library(gatesnm gatesnm/snm.c gatesnm/snm.h)
 target_include_directories(gatesnm
         PUBLIC "$<BUILD_INTERFACE:${MODULE_DIR}>"
-        PUBLIC "$<INSTALL_INTERFACE:${INCLUDE_DIR}>")
+        PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 target_link_libraries(gatesnm
         PRIVATE gate)
 

@@ -16,7 +16,7 @@ add_library(gate
         gate/constants.h)
 target_include_directories(gate
         PUBLIC "$<BUILD_INTERFACE:${MODULE_DIR}>"
-        PUBLIC "$<INSTALL_INTERFACE:${INCLUDE_DIR}>")
+        PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 target_link_libraries(gate
         PUBLIC cspice
         PRIVATE m)
