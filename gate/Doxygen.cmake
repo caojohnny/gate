@@ -3,11 +3,11 @@
 # Minor modifications made to file paths and formatting
 
 # first we can indicate the documentation build as an option and set it to ON by default
-option(BUILD_DOC "Build documentation" ON)
+option(BUILD_DOC "Build documentation" OFF)
 
 # check if Doxygen is installed
 find_package(Doxygen)
-if (DOXYGEN_FOUND)
+if (BUILD_DOC AND DOXYGEN_FOUND)
     # set input and output files
     set(DOXYGEN_IN ${CMAKE_SOURCE_DIR}/doc/Doxyfile.in)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
@@ -20,6 +20,6 @@ if (DOXYGEN_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Generating API documentation with Doxygen"
             VERBATIM)
-else ()
+elseif (NOT DOXYGEN_FOUND)
     message("Doxygen need to be installed to generate the doxygen documentation")
 endif ()

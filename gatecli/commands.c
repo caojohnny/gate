@@ -3,10 +3,10 @@
 #include <cspice/SpiceUsr.h>
 #include <stdlib.h>
 #include <string.h>
-#include <timeconv.h>
 #include <unistd.h>
 
 #include <gate/stars.h>
+#include <gate/timeconv.h>
 #include <gate/topo.h>
 #include <gatesnm/snm.h>
 
