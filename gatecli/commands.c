@@ -257,7 +257,6 @@ void load(int argc, char **argv, volatile int *is_running) {
                 }
 
                 if (c == EOF) {
-                    fclose(cmd_file);
                     break;
                 }
 

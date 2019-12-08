@@ -9,7 +9,7 @@ static const char *OPTION_KEY_STRINGS[] = {
 };
 
 static void *options[OPTION_KEY_LENGTH] = {
-        "EARTH", NULL, NULL, NULL
+        OBSERVER_BODY_EARTH, NULL, NULL, NULL
 };
 
 option_key string_to_key(char *string) {
@@ -29,7 +29,7 @@ const char *key_to_string(option_key key) {
 
 void set_option(option_key key, void *value) {
     void *current_value = options[key];
-    if (current_value != NULL) {
+    if (current_value != OBSERVER_BODY_EARTH && current_value != NULL) {
         free(current_value);
     }
 

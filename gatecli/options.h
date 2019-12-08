@@ -22,6 +22,12 @@ typedef enum {
 } option_key;
 
 /**
+ * Default observer body constant to avoid issues with
+ * freeing default values.
+ */
+static char *const OBSERVER_BODY_EARTH = "EARTH";
+
+/**
  * Converts a string value into an option_key enum value.
  *
  * @param string the string to convert
