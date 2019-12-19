@@ -16,4 +16,4 @@
  */
 int eq_ignore_case(const char *one, const char *two);
 
-#endif // GATE_UTIL_H
+#endif // GATECLI_UTIL_H

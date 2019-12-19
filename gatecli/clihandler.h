@@ -48,4 +48,4 @@ void handle_tokens(int argc, char **argv);
  */
 void handle_signal(int signal);
 
-#endif // GATE_CLIHANDLER_H
+#endif // GATECLI_CLIHANDLER_H

@@ -70,4 +70,4 @@ typedef struct {
  */
 void snm_parse_data(FILE *file, int *parsed_data_len, csn_data **parsed_data);
 
-#endif // GATE_SNM_H
+#endif // GATESNM_SNM_H

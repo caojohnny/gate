@@ -13,6 +13,7 @@
 #include "options.h"
 #include "util.h"
 #include "dispatcher.h"
+#include "table.h"
 
 #define TAB_NAME_MAX_LEN 100
 #define FILTER_MAX_LEN 100
@@ -26,10 +27,14 @@
 static int csn_data_len = -1;
 static csn_data *csn_data_array;
 
-static int sat_data_len = -1;
+static gatecli_table sat_data_array;
 
-static int calc_data_len = -1;
-static calc_data *calc_data_array;
+static gatecli_table calc_data_array;
+
+void init() {
+    sat_data_array = gatecli_table_new();
+    calc_data_array = gatecli_table_new();
+}
 
 void help() {
     puts("You can Ctrl+C any time to halt continuous output");
@@ -416,15 +421,19 @@ void show(int argc, char **argv, volatile int *is_running) {
     }
 
     if (eq_ignore_case("CALC", argv[1])) {
-        if (calc_data_len < 1) {
+        if (calc_data_array.size == 0) {
             printf("No custom objects added\n");
             return;
         }
 
-        printf("Showing %d custom body IDs:\n", calc_data_len);
-        for (int i = 0; i < calc_data_len; ++i) {
-            calc_data data = calc_data_array[i];
-            printf("%s\n", data.item_id);
+        printf("Showing %d custom body IDs:\n", calc_data_array.size);
+        for (int i = 0; i < calc_data_array.buckets_len; ++i) {
+            for (gatecli_table_entry *entry = calc_data_array.buckets[i];
+                 entry != NULL;
+                 entry = entry->next) {
+                calc_data *data = entry->value;
+                printf("%s\n", data->item_id);
+            }
         }
 
         return;
@@ -736,7 +745,8 @@ static void body_azel(char **argv, volatile int *is_running) {
     SpiceDouble observer_longitude = *observer_longitude_opt;
 
     gate_topo_frame observer_frame;
-    gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0, &observer_frame);
+    gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0,
+                         &observer_frame);
 
     printf("Printing azimuth/elevation for body '%s' (%s)\n\n", argv[2], body_name);
 
@@ -825,18 +835,8 @@ static void calc_info(char *arg) {
 }
 
 static void calc_azel(char **argv, volatile int *is_running) {
-    calc_data body;
-    SpiceBoolean found = SPICEFALSE;
-    for (int i = 0; i < calc_data_len; ++i) {
-        calc_data data = calc_data_array[i];
-
-        if (eq_ignore_case(data.item_id, argv[2])) {
-            body = data;
-            found = SPICETRUE;
-        }
-    }
-
-    if (!found) {
+    calc_data *body = gatecli_table_get(&calc_data_array, argv[2]);
+    if (body == NULL) {
         printf("No custom body with ID '%s'. Try CALC ADD?\n", argv[2]);
         return;
     }
@@ -884,9 +884,10 @@ static void calc_azel(char **argv, volatile int *is_running) {
     SpiceDouble observer_longitude = *observer_longitude_opt;
 
     gate_topo_frame observer_frame;
-    gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0, &observer_frame);
+    gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0,
+                         &observer_frame);
 
-    printf("Printing azimuth/elevation for custom ID '%s' (%s)\n\n", argv[2], body.item_id);
+    printf("Printing azimuth/elevation for custom ID '%s' (%s)\n\n", argv[2], body->item_id);
 
     SpiceDouble loop_start_et;
     gate_et_now(&loop_start_et);

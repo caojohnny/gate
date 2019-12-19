@@ -27,4 +27,4 @@
  */
 void dispatch(int argc, char **argv, volatile int *is_running);
 
-#endif // GATE_DISPATCHER_H
+#endif // GATECLI_DISPATCHER_H

@@ -2,6 +2,7 @@
 # along with any associated files
 
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 set(EL_MODULE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(EL_STAGING_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(EL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")

@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "clihandler.h"
+#include "table.h"
 
 void load_cmd_files(int argc, char **argv) {
     if (argc == 1) {

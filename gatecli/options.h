@@ -61,4 +61,4 @@ void set_option(option_key key, void *value);
  */
 void *get_option(option_key key);
 
-#endif // GATE_OPTIONS_H
+#endif // GATECLI_OPTIONS_H

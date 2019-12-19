@@ -144,4 +144,4 @@ void sat(int argc, char **argv, volatile int *is_running);
  */
 void calc(int argc, char **argv, volatile int *is_running);
 
-#endif // GATE_COMMANDS_H
+#endif // GATECLI_COMMANDS_H
