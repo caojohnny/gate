@@ -42,6 +42,15 @@
  * system of locating an object) coordinates on Earth, and
  * one procedure to unload the kernel pool variables that
  * were loaded by the previous procedure.
+ *
+ * While generally the orientation of a topographic frame
+ * with respect to the observer isn't that important, for
+ * reference, the topographic frame produced by the
+ * procedures in this file follow that outlined by the
+ * SPICE Toolkit frames required reading
+ * (https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html#Defining%20a%20TK%20Frame%20Using%20Euler%20Angles):
+ * X points to true north, Y points west and Z points
+ * outward normal to the observation plane.
  */
 
 #ifndef GATE_TOPO_H
@@ -84,9 +93,6 @@ typedef struct {
  *
  * Requires a kernel specifying a body-fixed frame for the
  * given body, usually a generic PCK.
- *
- * Frame names are limited to 26 characters to avoid
- * overflowing the kernel pool name limit (32).
  *
  * Because the offset only performs angular
  * transformations, the radius of the body is not
