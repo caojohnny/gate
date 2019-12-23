@@ -1,9 +1,11 @@
 #include "commands.h"
 #include <stdio.h>
-#include <cspice/SpiceUsr.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <cspice/SpiceUsr.h>
+#include <cspice/SpiceZfc.h>
 
 #include <gate/stars.h>
 #include <gate/timeconv.h>
@@ -23,18 +25,18 @@
 #define NAIF_ID_MAX 100000000
 #define FRAME_NAME_MAX_LEN 33
 #define KERNEL_FRAMES_MAX_LEN 500
+#define TLE_MIN_YEAR 1960
+#define TLE_LINE_LEN 70
 
 static int csn_data_len = -1;
 static csn_data *csn_data_array;
 
+// https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/spicelib/ev2lin.html
+static const SpiceDouble GEO_CONSTANTS[] =
+        {1.082616e-3, -2.53881e-6, -1.65597e-6, 7.43669161e-2, 120.0, 78.0, 6378.135, 1.0};
 static gatecli_table sat_data_array;
 
 static gatecli_table calc_data_array;
-
-void init() {
-    sat_data_array = gatecli_table_new();
-    calc_data_array = gatecli_table_new();
-}
 
 void help() {
     puts("You can Ctrl+C any time to halt continuous output");
@@ -51,12 +53,11 @@ void help() {
     puts("STAR AZEL <catalog number> <CONT | count> <ISO time | NOW> - prints the observation position for the star with the given catalog number");
     puts("BODY INFO <naif id> - prints information for a body with the given NAIF ID");
     puts("BODY AZEL <naif id> <CONT | count> <ISO time | NOW> - prints the observation position for the satellite with the given NAIF ID");
-    // TODO - how to enter Keplerian elements?
     puts("SAT ADD <id> - adds a satellite with the given ID to the internal database (non persistent)");
     puts("SAT REM <id> - removes the satellite with the given ID from the internal database");
     puts("SAT INFO <id> - prints information for a satellite added with the given ID");
     puts("SAT AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation position for the satellite added with the given ID");
-    puts("CALC ADD <id> - adds a body with the given ID to the internal database (non persistent)");
+    puts("CALC ADD <id> <RANGE> <RA deg> <DEC deg> [<RA_PM deg/yr> <DEC_PM deg/yr>] - adds a body with the given ID to the internal database (non persistent)");
     puts("CALC REM <id> - removes a body with the given ID from the internal database");
     puts("CALC INFO <id> - prints information for a custom calculated body with the given ID");
     puts("CALC AZEL <id> <CONT | count> <ISO time | NOW> - prints the observation for position the calculated body added with the given ID");
@@ -70,9 +71,7 @@ void help() {
 }
 
 static char *set_option_string(option_key key, char **argv) {
-    size_t body_len = strlen(argv[2]) + 1;
-    char *value_copy = malloc(body_len * sizeof(*value_copy));
-    strcpy(value_copy, argv[2]);
+    char *value_copy = strdup(argv[2]);
     set_option(key, value_copy);
     return value_copy;
 }
@@ -420,6 +419,24 @@ void show(int argc, char **argv, volatile int *is_running) {
         return;
     }
 
+    if (eq_ignore_case("SAT", argv[1])) {
+        if (sat_data_array.size == 0) {
+            printf("No satellites added\n");
+            return;
+        }
+
+        printf("Showing %d satellite IDs:\n", sat_data_array.size);
+        for (int i = 0; i < sat_data_array.buckets_len; ++i) {
+            for (gatecli_table_entry *entry = sat_data_array.buckets[i];
+                 entry != NULL;
+                 entry = entry->next) {
+                printf("%s\n", entry->key);
+            }
+        }
+
+        return;
+    }
+
     if (eq_ignore_case("CALC", argv[1])) {
         if (calc_data_array.size == 0) {
             printf("No custom objects added\n");
@@ -431,8 +448,7 @@ void show(int argc, char **argv, volatile int *is_running) {
             for (gatecli_table_entry *entry = calc_data_array.buckets[i];
                  entry != NULL;
                  entry = entry->next) {
-                calc_data *data = entry->value;
-                printf("%s\n", data->item_id);
+                printf("%s\n", entry->key);
             }
         }
 
@@ -822,16 +838,334 @@ void body(int argc, char **argv, volatile int *is_running) {
     printf("Unrecognized option: '%s'\n", argv[1]);
 }
 
+static char *read_line(int line_len, SpiceChar *line) {
+    for (int i = 0; i < line_len; ++i) {
+        line[i] = fgetc(stdin);
+    }
+
+    // Overwrite the new line char with NULL
+    line[line_len - 1] = '\0';
+
+    return line;
+}
+
+static void sat_add(char *arg) {
+    printf("Paste TLE data below:\n");
+
+    SpiceChar lines[2][TLE_LINE_LEN];
+    read_line(TLE_LINE_LEN, lines[0]);
+    read_line(TLE_LINE_LEN, lines[1]);
+    if (lines[0] == NULL || lines[1] == NULL) {
+        printf("Invalid input\n");
+        return;
+    }
+
+    char *id = strdup(arg);
+    sat_data *data = malloc(sizeof(*data));
+
+    data->lines[0] = strdup(lines[0]);
+    data->lines[1] = strdup(lines[1]);
+    getelm_c(TLE_MIN_YEAR, TLE_LINE_LEN, lines, &data->epoch, data->elements);
+
+    char orbit_freq_str[12];
+    memcpy(orbit_freq_str, lines[1] + 52, 11 * sizeof(*orbit_freq_str));
+    orbit_freq_str[11] = '\0';
+
+    char *end;
+    double orbit_freq = strtod(orbit_freq_str, &end);
+    if (end == orbit_freq_str) {
+        printf("Error parsing orbit frequency '%s'\n", orbit_freq_str);
+        return;
+    }
+
+    double orbit_period = 24 * 60 / orbit_freq;
+    data->is_deep_space = orbit_period >= 225;
+
+    gatecli_table_put(&sat_data_array, id, data);
+    printf("Added satellite '%s' to the database\n", arg);
+}
+
+static void sat_rem(char *arg) {
+    sat_data *data = gatecli_table_rem(&sat_data_array, arg);
+    if (data != NULL) {
+        free(data->lines[0]);
+        free(data->lines[1]);
+        free(data);
+
+        printf("Successfully removed satellite '%s'\n", arg);
+    } else {
+        printf("No satellite in database called '%s'\n", arg);
+    }
+}
+
+static void sat_info(char *arg) {
+    sat_data *data = gatecli_table_get(&sat_data_array, arg);
+    if (data == NULL) {
+        printf("No object in database called '%s'\n", arg);
+        return;
+    }
+
+    printf("ID: %s\n"
+           "Epoch: %f seconds\n"
+           "Deep space: %s\n"
+           "\n"
+           "TLE:\n"
+           "%s\n"
+           "%s\n",
+           arg, data->epoch, data->is_deep_space ? "yes" : "no", data->lines[0], data->lines[1]);
+}
+
+static void sat_azel(char **argv, volatile int *is_running) {
+    sat_data *sat = gatecli_table_get(&sat_data_array, argv[2]);
+    if (sat == NULL) {
+        printf("No satellite with ID '%s'. Try SAT ADD?\n", argv[2]);
+        return;
+    }
+
+    SpiceBoolean is_cont = SPICEFALSE;
+    SpiceInt count;
+    if (eq_ignore_case("CONT", argv[3])) {
+        is_cont = SPICETRUE;
+    } else {
+        char *end;
+        count = strtol(argv[3], &end, 10);
+        if (argv[3] == end) {
+            printf("Not a valid number: %s\n", argv[3]);
+            return;
+        }
+    }
+
+    SpiceDouble calc_et;
+    if (eq_ignore_case("NOW", argv[4])) {
+        gate_et_now(&calc_et);
+    } else {
+        str2et_c(argv[4], &calc_et);
+    }
+
+    char *observer_body = (char *) check_and_get_option(OBSERVER_BODY);
+    if (observer_body == NULL) {
+        return;
+    }
+
+    SpiceInt observer_body_id;
+    SpiceBoolean observer_body_id_found;
+    bodn2c_c(observer_body, &observer_body_id, &observer_body_id_found);
+    if (!observer_body_id_found) {
+        printf("No NAIF ID was found for body '%s'! Try LOAD KERNEL?\n", observer_body);
+        return;
+    }
+
+    SpiceDouble *observer_latitude_opt = (double *) check_and_get_option(OBSERVER_LATITUDE);
+    SpiceDouble *observer_longitude_opt = (double *) check_and_get_option(OBSERVER_LONGITUDE);
+    if (observer_latitude_opt == NULL || observer_longitude_opt == NULL) {
+        return;
+    }
+
+    SpiceDouble observer_latitude = *observer_latitude_opt;
+    SpiceDouble observer_longitude = *observer_longitude_opt;
+
+    gate_topo_frame observer_frame;
+    gate_load_topo_frame("SAT_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0,
+                         &observer_frame);
+
+    printf("Printing azimuth/elevation for custom ID '%s' (%s)\n\n", argv[2], argv[2]);
+
+    SpiceDouble loop_start_et;
+    gate_et_now(&loop_start_et);
+
+    int rounds = 0;
+    while (SPICETRUE) {
+        SpiceChar calc_time_out[TIME_OUT_MAX_LEN];
+        timout_c(calc_et, "YYYY-MM-DD HR:MN:SC.#### UTC ::UTC", TIME_OUT_MAX_LEN, calc_time_out);
+
+        printf("%s:\n", calc_time_out);
+
+        SpiceDouble frame_transform_matrix[3][3];
+        pxform_c("J2000", observer_frame.frame_name, calc_et, frame_transform_matrix);
+
+        SpiceDouble cur_rec_j2000[6];
+        if (!sat->is_deep_space) {
+            ev2lin_(&calc_et, GEO_CONSTANTS, sat->elements, cur_rec_j2000);
+        } else {
+            dpspce_(&calc_et, GEO_CONSTANTS, sat->elements, cur_rec_j2000);
+        }
+
+        SpiceDouble rec[3];
+        mxv_c(frame_transform_matrix, cur_rec_j2000, rec);
+        gate_adjust_topo_rec(observer_frame, rec);
+
+        SpiceDouble azimuth;
+        SpiceDouble elevation;
+        gate_conv_rec_azel(rec, NULL, &azimuth, &elevation);
+        printf("Azimuth=%f Elevation=%f\n", azimuth, elevation);
+
+        if (!is_cont) {
+            rounds++;
+            if (rounds == count) {
+                break;
+            }
+        } else {
+            if (!*is_running) {
+                *is_running = SPICETRUE;
+                break;
+            }
+        }
+
+        puts("");
+        sleep(1);
+
+        SpiceDouble current_et;
+        gate_et_now(&current_et);
+
+        SpiceDouble elapsed = current_et - loop_start_et;
+        loop_start_et = current_et;
+
+        calc_et += elapsed;
+    }
+
+    gate_unload_topo_frame(observer_frame);
+}
+
 void sat(int argc, char **argv, volatile int *is_running) {
+    if (argc < 2) {
+        puts("This command requires at least 1 argument");
+        return;
+    }
+
+    if (eq_ignore_case("ADD", argv[1])) {
+        if (argc != 3) {
+            puts("This command requires 1 argument");
+            return;
+        }
+        return sat_add(argv[2]);
+    }
+
+    if (eq_ignore_case("REM", argv[1])) {
+        if (argc != 3) {
+            puts("This command requires 1 argument");
+            return;
+        }
+        return sat_rem(argv[2]);
+    }
+
+    if (eq_ignore_case("INFO", argv[1])) {
+        if (argc != 3) {
+            puts("This command requires 1 argument");
+            return;
+        }
+        return sat_info(argv[2]);
+    }
+
+    if (eq_ignore_case("AZEL", argv[1])) {
+        if (argc != 5) {
+            puts("This command requires 3 arguments");
+            return;
+        }
+        return sat_azel(argv, is_running);
+    }
+
+    printf("Unrecognized option: '%s'\n", argv[1]);
 }
 
 static void calc_add(int argc, char **argv) {
+    if (gatecli_table_get(&calc_data_array, argv[2]) != NULL) {
+        printf("WARNING: Replacing existing data entry '%s'\n", argv[2]);
+    }
+
+    char *end;
+    double r;
+    double ra;
+    double dec;
+    double ra_pm = 0;
+    double dec_pm = 0;
+    if (argc >= 6) {
+        r = strtod(argv[3], &end);
+        if (end == argv[3]) {
+            printf("Range '%s' is not a number\n", argv[3]);
+            return;
+        }
+
+        ra = strtod(argv[4], &end);
+        if (end == argv[4]) {
+            printf("Right ascension '%s' is not a number\n", argv[4]);
+            return;
+        }
+
+        dec = strtod(argv[5], &end);
+        if (end == argv[5]) {
+            printf("Declination '%s' is not a number\n", argv[5]);
+            return;
+        }
+    } else {
+        printf("Unrecognized command format\n");
+        return;
+    }
+
+    if (argc == 8) {
+        ra_pm = strtod(argv[6], &end);
+        if (end == argv[6]) {
+            printf("Right ascension '%s' is not a number\n", argv[6]);
+            return;
+        }
+
+        dec_pm = strtod(argv[7], &end);
+        if (end == argv[7]) {
+            printf("Declination '%s' is not a number\n", argv[7]);
+            return;
+        }
+    } else if (argc != 6) {
+        printf("Unrecognized command format\n");
+        return;
+    }
+
+    char *id = strdup(argv[2]);
+    calc_data *calc = malloc(sizeof(*calc));
+    calc->r = r;
+    calc->ra = ra;
+    calc->dec = dec;
+    calc->ra_pm = ra_pm;
+    calc->dec_pm = dec_pm;
+    gatecli_table_put(&calc_data_array, id, calc);
+
+    printf("Added '%s' to the custom object database\n", argv[2]);
 }
 
 static void calc_rem(char *arg) {
+    calc_data *data = gatecli_table_rem(&calc_data_array, arg);
+    if (data != NULL) {
+        free(data);
+        printf("Successfully removed custom object '%s'\n", arg);
+    } else {
+        printf("No object in database called '%s'\n", arg);
+    }
 }
 
 static void calc_info(char *arg) {
+    calc_data *data = gatecli_table_get(&calc_data_array, arg);
+    if (data == NULL) {
+        printf("No object in database called '%s'\n", arg);
+        return;
+    }
+
+    printf("ID: %s\n"
+           "Range: %f units\n"
+           "Right ascension: %f deg\n"
+           "Declination: %f deg\n"
+           "Right ascension proper motion: %f deg/yr\n"
+           "Declination proper motion: %f deg/yr\n",
+           arg, data->r, data->ra, data->dec, data->ra_pm, data->dec_pm);
+}
+
+void calc_cur_pos(calc_data data, SpiceDouble et, SpiceDouble *ra, SpiceDouble *dec) {
+    SpiceDouble dt = et / jyear_c();
+
+    if (ra != NULL) {
+        *ra = data.ra + (dt * data.ra_pm);
+    }
+
+    if (dec != NULL) {
+        *dec = data.dec + (dt * data.dec_pm);
+    }
 }
 
 static void calc_azel(char **argv, volatile int *is_running) {
@@ -884,10 +1218,10 @@ static void calc_azel(char **argv, volatile int *is_running) {
     SpiceDouble observer_longitude = *observer_longitude_opt;
 
     gate_topo_frame observer_frame;
-    gate_load_topo_frame("BODY_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0,
+    gate_load_topo_frame("CALC_AZEL_TOPO", observer_body_id, observer_latitude, observer_longitude, 0,
                          &observer_frame);
 
-    printf("Printing azimuth/elevation for custom ID '%s' (%s)\n\n", argv[2], body->item_id);
+    printf("Printing azimuth/elevation for custom ID '%s' (%s)\n\n", argv[2], argv[2]);
 
     SpiceDouble loop_start_et;
     gate_et_now(&loop_start_et);
@@ -899,9 +1233,21 @@ static void calc_azel(char **argv, volatile int *is_running) {
 
         printf("%s:\n", calc_time_out);
 
-        SpiceDouble rec[3];
+        SpiceDouble ra;
+        SpiceDouble dec;
+        calc_cur_pos(*body, calc_et, &ra, &dec);
 
-        // TODO - data format
+        SpiceDouble cur_rec_j2000[3];
+        SpiceDouble ra_rad = ra * rpd_c();
+        SpiceDouble dec_rad = dec * rpd_c();
+        radrec_c(body->r, ra_rad, dec_rad, cur_rec_j2000);
+
+        SpiceDouble frame_transform_matrix[3][3];
+        pxform_c("J2000", observer_frame.frame_name, calc_et, frame_transform_matrix);
+
+        SpiceDouble rec[3];
+        mxv_c(frame_transform_matrix, cur_rec_j2000, rec);
+        gate_adjust_topo_rec(observer_frame, rec);
 
         SpiceDouble azimuth;
         SpiceDouble elevation;
@@ -943,8 +1289,8 @@ void calc(int argc, char **argv, volatile int *is_running) {
     }
 
     if (eq_ignore_case("ADD", argv[1])) {
-        if (argc != 3) {
-            puts("This command requires 1 argument");
+        if (argc < 6) {
+            puts("This command at least 4 arguments");
             return;
         }
         return calc_add(argc, argv);

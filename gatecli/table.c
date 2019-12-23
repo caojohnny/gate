@@ -161,6 +161,7 @@ void *gatecli_table_rem(gatecli_table *tab, char *key) {
             void *prev_value = node->value;
             tab->size--;
 
+            free(node->key);
             free(node);
             return prev_value;
         }

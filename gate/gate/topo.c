@@ -35,7 +35,7 @@ static void find_free_frame_id(SpiceInt *frame_id) {
 }
 
 void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
-                          SpiceDouble latitude, SpiceDouble longitude, SpiceDouble radius,
+                          SpiceDouble latitude, SpiceDouble longitude, SpiceDouble altitude,
                           gate_topo_frame *topo_frame) {
     SpiceInt frame_id_lookup;
     namfrm_c(frame_name, &frame_id_lookup);
@@ -55,6 +55,24 @@ void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
         errint_c("%d", body_id);
         sigerr_c("resolve_rel_frame");
         return;
+    }
+
+    SpiceDouble observer_radius = 0;
+    if (altitude != NAN && bodfnd_c(body_id, "RADII")) {
+        SpiceInt returned_count;
+        SpiceDouble radii[3];
+        bodvcd_c(body_id, "RADII", 3, &returned_count, radii);
+
+        SpiceDouble lon_radians = longitude * rpd_c();
+        SpiceDouble lat_radians = latitude * rpd_c();
+        SpiceDouble f = (radii[0] - radii[2]) / radii[0];
+        SpiceDouble observer_rec[3];
+        georec_c(lon_radians, lat_radians, 0, radii[0], f, observer_rec);
+
+        SpiceDouble earth_radius = sqrt(pow(observer_rec[0], 2) +
+                                        pow(observer_rec[1], 2) +
+                                        pow(observer_rec[2], 2));
+        observer_radius = altitude + earth_radius;
     }
 
     SpiceInt frame_id;
@@ -81,32 +99,14 @@ void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
              lat_adjusted);
     lmpool_c(kernel_buffer, BUFFER_MAX_LINE_LEN, BUFFER_LINE_COUNT);
 
-    gate_topo_frame new_frame = {frame_name, body_id, latitude, longitude, radius};
+    gate_topo_frame new_frame = {frame_name, body_id, latitude, longitude, observer_radius};
     *topo_frame = new_frame;
 }
 
 void gate_load_earth_topo_frame(ConstSpiceChar *frame_name,
-                                SpiceDouble latitude, SpiceDouble longitude, SpiceDouble height,
+                                SpiceDouble latitude, SpiceDouble longitude, SpiceDouble altitude,
                                 gate_topo_frame *topo_frame) {
-    SpiceDouble observer_radius = 0;
-    if (height != NAN) {
-        SpiceInt returned_count;
-        SpiceDouble radii[3];
-        bodvrd_c("EARTH", "RADII", 3, &returned_count, radii);
-
-        SpiceDouble lon_radians = longitude * rpd_c();
-        SpiceDouble lat_radians = latitude * rpd_c();
-        SpiceDouble f = (radii[0] - radii[2]) / radii[0];
-        SpiceDouble observer_rec[3];
-        georec_c(lon_radians, lat_radians, 0, radii[0], f, observer_rec);
-
-        SpiceDouble earth_radius = sqrt(pow(observer_rec[0], 2) +
-                                        pow(observer_rec[1], 2) +
-                                        pow(observer_rec[2], 2));
-        observer_radius = height + earth_radius;
-    }
-
-    gate_load_topo_frame(frame_name, 399, latitude, longitude, observer_radius, topo_frame);
+    gate_load_topo_frame(frame_name, 399, latitude, longitude, altitude, topo_frame);
 }
 
 // TODO: I'm not actually sure this gets me to the actual topographic

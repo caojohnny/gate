@@ -11,7 +11,7 @@
  * offset from the Unix epoch (1 Jan 1970 00:00:00 UTC) in
  * milliseconds is desired. Whenever "ephemeris time" is
  * referred, it means that a Barycentric Dynamical Time
- * (TDB) offset in seconds is desired.
+ * (TDB) offset in seconds past J2000 is desired.
  */
 
 #ifndef GATE_TIMECONV_H

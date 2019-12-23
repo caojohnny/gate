@@ -6,13 +6,36 @@
 #ifndef GATE_COMMANDS_H
 #define GATE_COMMANDS_H
 
-typedef struct {
-    char *item_id;
-    char *frame;
+#include <cspice/SpiceUsr.h>
 
+/**
+ * Represents a satellite that has been added to the
+ * gatecli database using orbital elements such as the
+ * NORAD Keplerian TLE format.
+ */
+typedef struct {
+    char *lines[2];
+
+    SpiceDouble epoch;
+    SpiceDouble elements[10];
+
+    int is_deep_space;
+} sat_data;
+
+/**
+ * Represents an object that has been added to the gatecli
+ * database for the purpose of computing the position of an
+ * object in the sky that does not have a NAIF ID and is
+ * not a star mapped in a database, e.g. supernovae, black
+ * holes, pulsars and other interesting objects.
+ */
+typedef struct {
     double ra;
     double dec;
     double r;
+
+    double ra_pm;
+    double dec_pm;
 } calc_data;
 
 /**

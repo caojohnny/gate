@@ -118,7 +118,7 @@ typedef struct {
  * @param longitude the geodetic longitude of the observer
  * on the surface of the body, -180 to 180 to represent
  * 180W and 180E (input)
- * @param radius the distance of the observer from the
+ * @param altitude the distance of the observer from the
  * center of the body. This is not incorporated into the
  * frame, but it will be available in the output
  * gate_topo_frame (input)
@@ -137,7 +137,7 @@ typedef struct {
  * have been assigned to that body)
  */
 void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
-                          SpiceDouble latitude, SpiceDouble longitude, SpiceDouble radius,
+                          SpiceDouble latitude, SpiceDouble longitude, SpiceDouble altitude,
                           gate_topo_frame *topo_frame);
 
 /**
@@ -172,7 +172,7 @@ void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
  * @param longitude the geodetic longitude of the observer
  * on the surface of the Earth, -180 to 180 to represent
  * 180W and 180E (input)
- * @param height the height of the observer off of the
+ * @param altitude the height of the observer off of the
  * Earth's geodetic spheroid in kilometers at that
  * location, or 0 to use the geodetic radius, or NAN to use
  * the center of the Earth (whereby radius would therefore
@@ -192,7 +192,7 @@ void gate_load_topo_frame(ConstSpiceChar *frame_name, SpiceInt body_id,
  * kernel specifies one)
  */
 void gate_load_earth_topo_frame(ConstSpiceChar *frame_name,
-                                SpiceDouble latitude, SpiceDouble longitude, SpiceDouble height,
+                                SpiceDouble latitude, SpiceDouble longitude, SpiceDouble altitude,
                                 gate_topo_frame *topo_frame);
 
 /**
