@@ -1,7 +1,7 @@
 # `gate`
 
 If you're familiar with my
-[`fate`](https://github.com/AgentTroll/fate) project, then
+[`fate`](https://github.com/caojohnny/fate) project, then
 you'll know that this basically extends on the idea of
 helping you track non-natural satellites (e.g. the ISS).
 
@@ -20,7 +20,7 @@ database using RA/Dec.
 Requires `cmake` installed.
 
 ``` shell
-git clone https://github.com/AgentTroll/gate.git
+git clone https://github.com/caojohnny/gate.git
 mkdir gate/build && cd gate/build
 cmake ..
 make install -j4
